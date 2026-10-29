@@ -1,0 +1,27 @@
+\begin{table*}[t]
+\centering
+\caption{Paired differences between routing policies under antigen-level resampling, with 95\% two-way bootstrap intervals. All four quality metrics are shown for every comparison. An interval containing zero is reported as no detected difference; intervals excluding zero are marked $^{\ast}$.}
+\label{tab:paired}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Comparison & $\Delta$MCC & $\Delta$ROC-AUC & $\Delta$AP & $\Delta$F1 \\
+\midrule
+adaptive-split vs edge-only & -0.017 & -0.005 & -0.005 & +0.002 \\
+ & \tiny[-0.066, +0.026] & \tiny[-0.040, +0.021] & \tiny[-0.029, +0.027] & \tiny[-0.030, +0.034] \\
+\addlinespace
+adaptive-split vs local-only & +0.025 & +0.014 & +0.015 & +0.033$^{\ast}$ \\
+ & \tiny[-0.011, +0.065] & \tiny[-0.004, +0.038] & \tiny[-0.001, +0.041] & \tiny[+0.004, +0.075] \\
+\addlinespace
+carbon-guard vs adaptive-split & -0.027$^{\ast}$ & -0.015 & -0.015$^{\ast}$ & -0.016$^{\ast}$ \\
+ & \tiny[-0.064, -0.001] & \tiny[-0.038, +0.000] & \tiny[-0.040, -0.000] & \tiny[-0.039, -0.001] \\
+\addlinespace
+PLM region-constrained vs PLM local-only & +0.024 & +0.012 & +0.018$^{\ast}$ & +0.014 \\
+ & \tiny[-0.024, +0.073] & \tiny[-0.011, +0.033] & \tiny[+0.003, +0.036] & \tiny[-0.020, +0.049] \\
+\addlinespace
+PLM adaptive-split vs PLM edge-only & -0.010 & -0.011$^{\ast}$ & -0.014$^{\ast}$ & -0.006 \\
+ & \tiny[-0.038, +0.016] & \tiny[-0.022, -0.001] & \tiny[-0.026, -0.005] & \tiny[-0.027, +0.012] \\
+\bottomrule
+\end{tabular}
+\end{table*}

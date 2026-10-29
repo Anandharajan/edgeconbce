@@ -1,0 +1,26 @@
+{
+  "analysis": "carbon_cost_model_decomposition",
+  "identity": "C_adaptive = C_local + r * C_edge",
+  "c_local_gco2e": 0.120003,
+  "c_edge_gco2e": 0.139335,
+  "c_adaptive_recorded_gco2e": 0.159978,
+  "c_adaptive_predicted_gco2e": 0.15994574644499998,
+  "absolute_error": 3.225355500002802e-05,
+  "relative_error": 0.0002016124404607385,
+  "route_rate": 0.286667,
+  "break_even_route_rate": 0.13874475185703516,
+  "exceeds_edge_only": true,
+  "interpretation": "Routing costs more modelled carbon than always-remote execution whenever the routed fraction exceeds 1 - C_local/C_edge. The sign of the comparison is therefore set by the cost constants and the routed fraction, not discovered from the runs.",
+  "operational_term": {
+    "mean_local_gco2e_per_request": 6.963357139105741e-06,
+    "mean_edge_gco2e_per_request": 0.00240696180946934,
+    "note": "At the observed latencies the operational term is a very small fraction of each per-request total, so modelled carbon is governed by the number of device-requests a policy charges rather than by how long they take."
+  },
+  "embodied_term": {
+    "declared_local_gco2e_per_request": 0.6,
+    "declared_edge_gco2e_per_request": 0.2125,
+    "implied_local_gco2e_per_request": 0.12,
+    "implied_edge_gco2e_per_request": 0.138125,
+    "note": "The operational term reproduces exactly from the recorded configuration. The embodied term, which dominates both totals, does not: the value implied by the recorded per-antigen totals differs from the value the recorded device configuration declares. The per-policy ORDERING is unaffected, because it follows from the identity above for any positive constants, but the absolute carbon figures cannot be reproduced from the configuration as stored."
+  }
+}

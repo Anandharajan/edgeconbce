@@ -1,0 +1,332 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{What routing buys, and what it costs}
+\label{sec:routing-results}
+
+
+\input{tables/tab_policy_summary}
+\input{tables/tab_paired}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_quality_latency.pdf}
+\caption{Predictive quality against mean per-antigen latency on the BP3C50ID
+external split, by policy family. Points are means over \NumSeeds{} seeds; bars
+are 95\% bootstrap intervals on both axes. In the PLM panel the adaptive-split
+and conformal-guard markers coincide exactly, because the conformal criterion
+never altered a routing decision on this split.}
+\label{fig:quality-latency}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_quality_datamovement.pdf}
+\caption{Predictive quality against the fraction of antigens whose raw sequence
+is transmitted. Policies at zero on the horizontal axis never transmit;
+edge-only transmits every antigen. Adaptive-split occupies the interior of this
+trade-off, which always-local and always-remote execution cannot.}
+\label{fig:quality-data}
+\end{figure*}
+
+Table~\ref{tab:policy-summary} reports every policy on the BP3C50ID external
+split across \NumSeeds{} seeds, and Table~\ref{tab:paired} gives the paired
+comparisons that the claims below rest on.
+
+Those five comparisons were fixed before the resampling was run: each contrasts
+a routing policy with the always-local or always-remote baseline it is meant to
+improve on, within its own predictor family. The resampling itself produces
+intervals for all \PolicyPairsComputed{} orderable pairs of policies on each
+metric, or \QualityIntervalsComputed{} intervals on the four quality metrics
+together. We mark intervals that exclude zero in Table~\ref{tab:paired} as a
+reading aid for those five rows, and no multiplicity correction is applied. A
+reader should not treat the marks as a family-wise claim: across
+\QualityIntervalsComputed{} intervals a handful would fall outside zero under
+a global null, and several of the marked endpoints sit close enough to zero
+that the Monte Carlo error of a \AntigenBootstrapRepeats{}-resample bootstrap
+could move them. We draw no conclusion from any single mark, and the
+conclusions below rest on the size and direction of the differences rather
+than on which intervals happen to exclude zero.
+
+Two points about those intervals before the results. They are two-way
+bootstrap intervals over antigens and seeds
+(\AntigenBootstrapRepeats{} resamples), not intervals over seeds alone. The
+distinction is not cosmetic: the test split holds the same
+\AntigenCount{} antigens in every seed, so a seed-only interval measures
+how much a number moves when the harness is re-run and says nothing about how
+it would move on different antigens. On this data seed-only intervals
+are roughly an order of magnitude narrower: local-only MCC is
+\ALocalOnlyMcc{} [\ALocalOnlyMccLo{}, \ALocalOnlyMccHi{}] under antigen
+resampling against a seed-only width of a hundredth. For two of the
+policies the seed-only ROC-AUC interval has width zero, because the underlying
+predictor is deterministic and only the validation split moves. Every interval
+below is the antigen-level one. We report it this way because the claims are
+claims about antigens.
+
+The first result is that the latency and disclosure benefits of routing are
+large and survive this resampling, while the quality questions do not resolve
+at this sample size. Figure~\ref{fig:quality-latency} plots predictive quality
+against mean
+per-antigen latency for each policy family.
+
+Against always-remote execution, adaptive-split cuts mean latency by
+\(\ADAsVsEoLatency{}\,\)ms [\ADAsVsEoLatencyLo{}, \ADAsVsEoLatencyHi{}] and
+reduces the fraction of antigens whose raw sequence is transmitted by
+\ADAsVsEoRawShare{} [\ADAsVsEoRawShareLo{}, \ADAsVsEoRawShareHi{}]
+(Figure~\ref{fig:quality-data} shows quality against that fraction). Neither
+difference could have come out positive: a policy that routes some antigens
+cannot be slower than one that routes all of them, and cannot transmit more
+sequences. These intervals therefore say how large the gain is on other
+antigens, not whether there is one. On quality it differs by
+\(\Delta\)MCC \ADAsVsEoMcc{} [\ADAsVsEoMccLo{}, \ADAsVsEoMccHi{}],
+\(\Delta\)ROC-AUC \ADAsVsEoAuc{} [\ADAsVsEoAucLo{}, \ADAsVsEoAucHi{}],
+\(\Delta\)AP \ADAsVsEoAp{} [\ADAsVsEoApLo{}, \ADAsVsEoApHi{}] and \(\Delta\)F1
+\ADAsVsEoFOne{} [\ADAsVsEoFOneLo{}, \ADAsVsEoFOneHi{}]. All four contain zero.
+
+We want to be careful about what that does and does not license. It is not a
+demonstration of equivalence. With \AntigenCount{} antigens the interval on
+\(\Delta\)MCC spans roughly \(\pm 0.05\), so a quality loss large enough to
+matter in practice would not be detected here. The defensible statement is that
+routing's quality cost relative to always-remote execution is not resolved at
+this sample size, while its latency and disclosure benefits are.
+
+The comparison against always-local execution tells the same story from the
+other side. \(\Delta\)MCC is \ADAsVsLoMcc{}
+[\ADAsVsLoMccLo{}, \ADAsVsLoMccHi{}], \(\Delta\)ROC-AUC \ADAsVsLoAuc{}
+[\ADAsVsLoAucLo{}, \ADAsVsLoAucHi{}] and \(\Delta\)AP \ADAsVsLoAp{}
+[\ADAsVsLoApLo{}, \ADAsVsLoApHi{}], all containing zero, while
+\(\Delta\)F1 is \ADAsVsLoFOne{} [\ADAsVsLoFOneLo{}, \ADAsVsLoFOneHi{}], which
+does not. One metric of four separates them. Under seed-only resampling the
+same comparison appears decisive on every metric, with \(\Delta\)MCC
+\DAsVsLoMcc{} [\DAsVsLoMccLo{}, \DAsVsLoMccHi{}] and a sign test over seeds at
+\(p=\SAsVsLoMccP{}\). That sign test is a statement about ten re-runs on fifteen
+fixed antigens, and we no longer rest anything on it.
+
+Two comparisons do survive. The carbon-guard policy is worse than adaptive-split
+on three of four metrics (\(\Delta\)MCC \ADCgVsAsMcc{}
+[\ADCgVsAsMccLo{}, \ADCgVsAsMccHi{}]), so its latency and carbon savings are
+bought with quality. Within the PLM family, always-remote execution beats
+always-local on ROC-AUC and average precision. PLM routing gives part of
+that back (\(\Delta\)ROC-AUC \ADPasVsPeoAuc{}
+[\ADPasVsPeoAucLo{}, \ADPasVsPeoAucHi{}] against PLM always-remote): in the
+family where the remote model is genuinely stronger, routing's quality cost is
+detectable even here.
+
+Table~\ref{tab:scenarios} reports the robustness axes the harness provides. The
+informative row is the one where the remote tier is unavailable: every
+adaptive-versus-local difference is then exactly zero, because routing degrades
+to local-only behaviour rather than failing. The grid-intensity axes move
+nothing that matters, and the parameter the carbon results are most sensitive
+to --- the embodied amortisation constant --- is not among the available axes
+(Section~\ref{sec:limitations}).
+
+
+\input{tables/tab_scenarios}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_carbon.pdf}
+\caption{Modelled carbon per antigen by policy, with 95\% intervals. These are
+outputs of the energy model described in Section~\ref{sec:cost-accounting},
+computed from fixed device power, an amortised embodied term and measured
+latency; they are not metered measurements. Uncertainty-triggered routing is
+the most carbon-intensive policy because a routed antigen is charged two
+device-requests.}
+\label{fig:carbon}
+\end{figure*}
+
+\input{tables/tab_provenance}
+
+The second result runs against the expectation that motivated the policy.
+Figure~\ref{fig:carbon} shows modelled carbon per antigen for every policy.
+Adaptive-split is the \emph{highest} of the nine at
+\AdaptiveSplitCarbon{}~gCO\textsubscript{2}e
+[\AdaptiveSplitCarbonLo{}, \AdaptiveSplitCarbonHi{}], above both edge-only
+(\EdgeOnlyCarbon{}) and local-only (\LocalOnlyCarbon{}). The paired difference
+against local-only is \DAsVsLoCarbon{} [\DAsVsLoCarbonLo{}, \DAsVsLoCarbonHi{}]
+and against edge-only \DAsVsEoCarbon{} [\DAsVsEoCarbonLo{}, \DAsVsEoCarbonHi{}],
+both intervals excluding zero.
+
+This ordering is not an empirical discovery. Because a routed antigen incurs
+the local pass that
+decided to route it and then the remote pass, the modelled carbon of the
+routing policy is determined by the two single-tier costs and the
+routed fraction $r$:
+\begin{equation}
+C_{\text{adaptive}} \;=\; C_{\text{local}} \;+\; r\,C_{\text{edge}}.
+\label{eq:carbon-identity}
+\end{equation}
+Equation~\ref{eq:carbon-identity} reproduces the measured aggregate to within
+\CarbonIdentityError{}\% (predicted \CarbonPredictedAdaptive{} against measured
+\AdaptiveSplitCarbon{}). Rearranging, routing costs more than always-remote
+execution exactly when
+\begin{equation}
+r \;>\; 1 - \frac{C_{\text{local}}}{C_{\text{edge}}},
+\label{eq:carbon-threshold}
+\end{equation}
+which for this device pair is \CarbonBreakEvenRate{}. The policy routes
+\AdaptiveSplitRouteRate{} of antigens, roughly twice that threshold, so it
+lands on the unfavourable side.
+
+Stated this way the result transfers. Equation~\ref{eq:carbon-threshold} says
+routing saves modelled carbon only where the local tier is cheap relative to
+the remote tier \emph{and} the routed fraction stays below
+$1 - C_{\text{local}}/C_{\text{edge}}$. That is the offloading energy threshold
+of \citet{kumar2010cloud} written for this cost model, and our system falls on the
+wrong side of it because per-residue screening on short
+sequences makes the gating pass a large fraction of the work it gates. The
+same inversion has been reported for draft-and-verify decoding cascades
+\citep{dutta2026speculative}. What the measurements contribute is the location
+of the threshold for this task, not the existence of one.
+
+The carbon-guard policy, which exists precisely to suppress unprofitable
+routing, does reduce carbon to \CarbonGuardCarbon{} --- essentially
+edge-only's figure --- and cuts latency furthest, to
+\(\CarbonGuardLatency{}\,\)ms. It pays for this in quality: against
+adaptive-split its \(\Delta\)MCC is \DCgVsAsMcc{}
+[\DCgVsAsMccLo{}, \DCgVsAsMccHi{}], an interval that excludes zero, and its MCC
+of \CarbonGuardMcc{} is statistically indistinguishable from doing no routing at
+all. On this evaluation the carbon guard does not find a useful middle point; it
+mostly turns routing off.
+
+Within the PLM family the pattern is similar but compressed, and one component
+turns out to do nothing. The conformal-guard policy produces per-seed metrics
+identical to PLM adaptive-split on every metric we record, to the precision
+stored in the artifacts: the conformal criterion never changed a routing
+decision on this split. We report it as a null component rather than omitting
+it. The region-constrained post-processor, by contrast, is the one PLM addition
+that helps, improving on PLM local-only by \(\Delta\)MCC \DPreVsPloMcc{}
+[\DPreVsPloMccLo{}, \DPreVsPloMccHi{}] at no latency cost relative to PLM
+edge-only.
+
+\subsection{Reproducing the previously reported fusion advantage}
+\label{sec:replication}
+
+Before re-estimating the fusion effect we checked that any change could be
+attributed to the protocol rather than to our reimplementation. The
+original selection rule blends raw scores, scans the weight grid on the
+evaluation split, and sets the threshold to preserve the reference predictor's
+positive-call count on that split. Run through the loaders and metric code used
+throughout this paper, it reproduces the earlier analysis. All
+\TunedBpThreeReplicationRows{} entries of its stored weight-sensitivity grid
+agree to within \TunedBpThreeReplicationMaxDiff{}, inside the
+\TunedBpThreeReplicationTolerance{} tolerance the check applies and consistent
+with the precision at which that grid was rounded. The procedure independently
+selects the same optimum, \(w=\TunedBpThreeWeight{}\), and the same
+positive-call count of \TunedBpThreePositiveCalls{}. This comparison is
+executed by the replication script and its outcome recorded in the artifact
+(status: \TunedBpThreeReplicationStatus{}) rather than asserted here.
+Differences between the two protocols below are therefore attributable to how
+the configuration is chosen rather than to a difference in implementation.
+
+\subsection{The fusion advantage does not survive nested selection}
+\label{sec:fusion-results}
+
+
+\input{tables/tab_fusion}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_fusion_forest.pdf}
+\caption{The fusion effect against the reference predictor under two selection
+protocols. Blue intervals are mean per-antigen differences with 95\% bootstrap
+intervals under leave-one-sequence-out nested selection; orange squares are the
+corresponding estimates when the weight and threshold are chosen on the
+evaluation split. On both datasets the nested interval contains zero while the
+test-derived estimate sits above it.}
+\label{fig:fusion-forest}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_per_sequence.pdf}
+\caption{Per-antigen change in ROC-AUC from fusion under nested selection,
+ordered by effect. The dispersion, particularly on the IEDB subset, is much
+larger than the mean effect in either direction.}
+\label{fig:per-sequence}
+\end{figure*}
+
+Table~\ref{tab:fusion} and Figure~\ref{fig:fusion-forest} give both protocols on
+both datasets.
+
+On BP3C50ID, nested selection leaves a mean per-antigen difference against
+BepiPred-3.0 of \NestedBpThreeDeltaAuc{} ROC-AUC
+[\NestedBpThreeDeltaAucLo{}, \NestedBpThreeDeltaAucHi{}], with
+\NestedBpThreeWinsAuc{} of \NestedBpThreeSequences{} antigens improving and a
+Wilcoxon $p$ of \NestedBpThreePAuc{}. MCC behaves the same way
+(\NestedBpThreeDeltaMcc{} [\NestedBpThreeDeltaMccLo{}, \NestedBpThreeDeltaMccHi{}],
+$p=\NestedBpThreePMcc{}$).
+
+The larger IEDB subset behaves the same way, with one important difference in
+what it tests. We have no BepiPred-3.0 predictions for those antigens, so that
+arm fuses the candidate with our own local-only predictor rather than with
+BepiPred-3.0. It is a second instance of the same selection question, not a
+replication of the same comparison, and we do not read it as independent
+confirmation of the BepiPred-3.0 result. The mean per-antigen
+difference in ROC-AUC is \NestedIedbDeltaAuc{}
+[\NestedIedbDeltaAucLo{}, \NestedIedbDeltaAucHi{}], with
+\NestedIedbWinsAuc{} of \NestedIedbSequences{} antigens improving
+($p=\NestedIedbPAuc{}$), and MCC gives \NestedIedbDeltaMcc{}
+[\NestedIedbDeltaMccLo{}, \NestedIedbDeltaMccHi{}]. Every interval on both
+datasets contains zero. Both the Wilcoxon test and the sign test discard
+antigens whose paired difference is exactly zero; on BP3C50ID this removes
+\NestedBpThreeTiesAuc{} antigens for ROC-AUC and \NestedBpThreeTiesMcc{} for
+MCC, and on the IEDB subset \NestedIedbTiesAuc{} and \NestedIedbTiesMcc{}, so
+the effective sample size is smaller than the stated number of antigens by
+that count.
+
+We are careful about what these nulls support. An interval containing zero is
+not evidence that the effect is zero, and at these sample sizes the paired
+design cannot resolve effects of the size at issue. With the observed
+per-antigen dispersion, the smallest difference BP3C50ID could detect with
+80\% power at a two-sided 5\% level is \NestedBpThreeMdeMcc{} in MCC and
+\NestedBpThreeMdeAuc{} in ROC-AUC; on the IEDB subset the corresponding
+figures are \NestedIedbMdeMcc{} and \NestedIedbMdeAuc{}. The MCC effect the
+test-derived protocol reports, \TunedBpThreeDeltaMcc{}, is far below what the
+nested analysis could have detected. A non-significant nested result was close
+to guaranteed, so it carries little evidential weight against that specific
+effect.
+
+What the design does identify is the behaviour of the estimator. Under the
+test-derived protocol the same BP3C50ID data yield \TunedBpThreeDeltaMcc{} MCC
+and \TunedBpThreeDeltaAuc{} ROC-AUC in favour of fusion; under nested
+selection the same quantity on the same data is \NestedBpThreeDeltaMcc{} and
+\NestedBpThreeDeltaAuc{}. The point estimate does not shrink towards zero, it
+changes sign. That is a statement about how much the selection step moves the
+estimate, which this comparison does identify, rather than a statement about
+the underlying effect, which it does not. The defensible conclusion is that
+the test-derived estimate is biased by at least the distance between the two,
+not that fusion does not help.
+
+Figure~\ref{fig:per-sequence} shows the per-antigen differences behind these
+means. The dispersion is far larger than the mean in both directions. That is
+what a null effect over a small number of antigens looks like, and it is the
+reason we report the paired tests rather than a pooled number alone.
+
+\subsection{Which predictor the procedure prefers}
+\label{sec:weight-transfer}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_weight_stability.pdf}
+\caption{The fusion weight selected in each training fold, by dataset, with
+medians marked. Both datasets place almost all of the weight on the reference
+predictor, which is the same conclusion the null effect reaches by a different
+route.}
+\label{fig:weight-stability}
+\end{figure*}
+
+Figure~\ref{fig:weight-stability} plots the weight chosen in each training fold.
+On BP3C50ID the folds settle around a median of \NestedBpThreeWeightMedian{}
+(range \NestedBpThreeWeightMin{} to \NestedBpThreeWeightMax{}); on the IEDB
+subset the median is \NestedIedbWeightMedian{} (range \NestedIedbWeightMin{} to
+\NestedIedbWeightMax{}). Both sit close to the upper end of the grid, meaning
+the selection procedure chooses to give our predictor almost no influence over
+the blended score.
+
+The selected weights are an independent route to the same
+conclusion. The nested evaluation says the blend cannot be distinguished from
+the reference predictor. The selected weights say why: the
+procedure, given a free choice, declines to use the second predictor. A fusion
+whose fitted weight approaches one is not a combination of two models but the
+stronger model with extra machinery attached.

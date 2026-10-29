@@ -1,0 +1,102 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Routing is a disclosure and latency mechanism, not a green one}
+
+The case for local--edge routing in a screening pipeline is sound, but it is a
+different case from the one usually made, and narrower than we expected to be
+able to make. On our evaluation the mechanism buys two things a laboratory can
+verify directly, and both survive antigen-level resampling. Screening finishes
+in roughly a third of the time always-remote execution takes. Most antigens are
+never transmitted. The second gain is not obtainable by buying a faster remote
+service.
+
+What it does not buy, on evidence of this size, is a demonstrated quality
+position. Against always-remote execution the quality difference is not
+resolved; against always-local execution only one metric of four separates
+them. We had originally read the same comparisons as decisive, on intervals
+computed over seeds, and Section~\ref{sec:routing-results} explains why those
+were the wrong intervals. A laboratory deciding whether to adopt routing should
+therefore treat the latency and disclosure gains as established here and the
+quality question as open. That is a less satisfying recommendation than the one
+we set out to make. It is also a more defensible one.
+
+What the mechanism does not buy is lower energy, and
+Equation~\ref{eq:carbon-threshold} says precisely when it would. Offloading
+saves energy only above a ratio of work offloaded to overhead incurred
+\citep{kumar2010cloud}. Our contribution is to locate that boundary for this
+task, at a routed fraction of \CarbonBreakEvenRate{}, and to observe that a
+policy tuned for predictive quality routes about twice as often as that. The
+green argument
+would recover for longer antigens or a heavier remote tier, where the ratio
+shifts. Practitioners can evaluate Equation~\ref{eq:carbon-threshold} for their
+own pair rather than assuming either direction.
+
+The practical recommendation, then, is to adopt routing when sequence disclosure
+or turnaround is the binding constraint, and not to adopt it on environmental
+grounds without measuring the ratio for the models actually in use.
+
+\subsection{What the fusion result means, and what it does not}
+
+Our result is that a convex blend of CARBON-BCE-R with BepiPred-3.0 shows no
+advantage over BepiPred-3.0 alone, on either of two datasets, once the blend is
+chosen without reference to the evaluation labels. The scope of that claim
+matters.
+
+It is not a claim that score fusion is useless in epitope prediction. It is a
+claim about one pair of predictors on two splits. One member of that pair is
+considerably weaker than the other, and the folds consistently chose to
+down-weight the weaker member. A fusion of two comparably strong and genuinely
+complementary predictors might well behave differently. Nothing here tests that.
+
+It is also not a claim that the earlier result was dishonestly produced. The
+protocol that generated it is easy to arrive at by accident, because a weight
+sweep serves two different purposes that look the same on the page. Presented as
+a sensitivity analysis, it answers "how fragile is this result to the weight?"
+Used to pick the reported row, it answers "what is the best this combination can
+look like?" The second question's answer is then reported as though it were the
+first's. The diagnostic is procedural rather than statistical: ask whether the
+configuration being reported was selected using the labels it is scored against.
+
+What the result does establish is that in this corner of the literature the
+difference between the two protocols is large enough to manufacture a positive
+finding out of a null one, on data where the optimistic protocol produced a
+plausible-looking effect with a bootstrap interval attached. Reporting an
+interval does not protect against selection bias when the selection happened
+before the interval was computed. Given how inexpensive the nested alternative
+is --- one extra loop over
+sequences, no new data, no new model --- we think it should be the default
+whenever a combination parameter is tuned on a dataset of this size.
+
+\subsection{Relation to prior work}
+
+Our benchmark is built on the BP3C50ID split distributed with BepiPred-3.0
+\citep{clifford2022bepipred}. The local predictor descends from the
+feature-based and deep approaches surveyed by \citet{cia2023critical} and
+exemplified in this journal by \citet{attique2023deepbce}. We do not advance the
+state of the art in predictive accuracy and do not claim to. Standalone
+CARBON-BCE-R remains below BepiPred-3.0 on BP3C50ID, and structure-aware methods
+such as DiscoTope-3.0 \citep{hoie2024discotope} occupy ground our sequence-only
+setting does not reach.
+
+Our evaluation is small beside purpose-built benchmarks for this area such as
+AsEP \citep{liu2024asep}, and we call it a measurement harness rather than a
+benchmark for that reason. Within the scope of inference routing, however, we
+are not aware of prior work that routes between a local and a remote
+conformational epitope predictor and measures the consequences. Federated
+approaches to protein modelling address a different problem. They distribute
+training rather than place inference.
+
+The systems contribution sits alongside the split-computing literature
+\citep{matsubara2022split}, from which the routing mechanism is borrowed rather
+than invented. What we add is the measurement of that mechanism against the
+objectives a wet-lab screening workflow actually has. That includes the
+counting measure of raw-sequence disclosure, which accuracy-oriented
+formulations do not express, and the observation that the energy argument
+inverts at this scale.
+
+The methodological contribution is an instance of the problem
+\citet{kapoor2023leakage} document across applied machine-learning fields,
+reported from the inside: we are correcting our own earlier result rather than
+auditing someone else's. We think instances of this kind are useful precisely
+because the published record contains few of them.

@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\caption{Sensitivity of the adaptive-split comparisons to the scenario axes available in the harness. Values are mean $\Delta$MCC over seeds. The grid-intensity axes do not touch predictive quality by construction and are included to show which axes were varied; the remote-tier-unavailable row is the informative one, where routing degrades exactly to always-local behaviour. The dominant carbon parameter, the embodied amortisation constant, is not among the available axes.}
+\label{tab:scenarios}
+\small
+\begin{tabular}{lrr}
+\toprule
+Scenario & $\Delta$MCC vs local-only & $\Delta$MCC vs edge-only \\
+\midrule
+baseline & +0.034 & -0.010 \\
+remote tier unavailable & +0.000 & +0.000 \\
+network $+\SI{50}{\milli\second}$ & +0.034 & -0.010 \\
+network $+\SI{5}{\milli\second}$ & +0.034 & -0.010 \\
+grid intensity $\times 1.5$ & +0.034 & -0.010 \\
+grid intensity $\times 0.5$ & +0.034 & -0.010 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software or its result artifacts, please cite the paper."
+title: "EdgeConBCE"
+authors:
+  - family-names: "TRV"
+    given-names: "Anandharajan"
+    affiliation: "Department of Electronics and Communication Engineering, St. Joseph College of Engineering, Sriperumbudur, Chennai 602117, India"
+    email: "trvanandharajan@gmail.com"
+license: MIT
+repository-code: "https://github.com/Anandharajan/edgeconbce"
+preferred-citation:
+  type: article
+  title: "Local-edge routing for conformational B-cell epitope prediction: what survives leakage-free selection"
+  authors:
+    - family-names: "TRV"
+      given-names: "Anandharajan"
+  journal: "Computational Biology and Chemistry"
+  year: 2026

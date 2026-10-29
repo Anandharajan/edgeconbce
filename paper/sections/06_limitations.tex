@@ -1,0 +1,95 @@
+\section{Limitations}
+\label{sec:limitations}
+
+Several constraints bound what can be concluded from this study.
+
+\paragraph{Carbon is modelled, never metered.} Every energy and carbon figure in
+this paper is computed from a fixed device power constant, a measured latency
+and a grid-intensity constant (Section~\ref{sec:cost-accounting},
+Table~\ref{tab:provenance}). No wall-power measurement was taken at any point.
+The carbon comparisons between policies are therefore comparisons of modelled
+quantities that are proportional to measured latency; they support statements
+about which policy does more work, and they do not support any statement about
+emissions of a deployed system. A metered replication on instrumented hardware
+is the obvious next step and is not something this study attempted.
+
+
+\paragraph{The carbon figures rest on two utilisation constants.} The energy
+model reproduces, but only once the utilisation fractions are
+supplied by hand. Across all \CarbonSequencesChecked{} antigens of the second
+dataset, recomputing each per-antigen total from the recorded device
+configuration, the measured latencies and the utilisation fractions of
+Section~\ref{sec:cost-accounting} matches the stored values to within
+\CarbonReconstructionError{}~gCO\textsubscript{2}e. The fractions are not in
+the recorded configuration, so the stored totals cannot be rebuilt from that
+configuration alone, and the released decomposition artifact says so. The
+fractions themselves,
+however, are literals in the benchmark code rather than entries in any
+configuration file, and they dominate the result: the embodied term is almost
+the whole of each per-request total.
+
+That matters for how far the carbon conclusion travels. Of
+\CarbonFractionSettingsTested{} alternative settings we evaluated, the ordering
+survives in all but \CarbonFractionSettingsFlipping{}. A device pair with the
+local tier at \CarbonFlipLocalFraction{} utilisation and the remote tier at
+\CarbonFlipEdgeFraction{} would put the break-even routed fraction at
+\CarbonFlipBreakEven{}, above the rate our policy actually routes at. Routing
+would then be the greener option. Our finding therefore holds for the hardware
+pair modelled here and for most reasonable variations on it. It remains a
+statement about a cost model whose dominant parameters deserve to be measured
+rather than assumed. A metered replication remains the right next
+step.
+
+\paragraph{The remote tier is co-located, not remote.} The latency figures
+attribute a transport cost to routed antigens, but the benchmark executes both
+tiers on one machine, and the two-node transport evidence in the artifact is an
+HTTP probe rather than a deployed remote model server. Real deployments would
+add network variance, queueing and failure modes that
+this harness does not model. For latency and for transmitted volume these
+would, if anything, favour routing rather than count against it, since
+always-remote execution pays the network on every antigen and routing pays it
+on roughly a quarter. What a real deployment would add against routing is of a
+different kind: a dependency on the remote tier for exactly the antigens the
+local model found hardest, and the failure and retry behaviour that comes with
+it. We measure none of that.
+
+
+\paragraph{The primary benchmark is small, and that bounds nearly everything.}
+BP3C50ID's external split has \BepipredNumAntigens{} antigens. Resampling on
+\BepipredNumAntigens{} units gives intervals wide enough that most quality
+comparisons in this paper are not resolved, and every such comparison should be
+read as "no effect detectable at this sample size" rather than as "no effect".
+This applies to the routing results as much as to the fusion analysis: the
+interval on the adaptive-split versus always-remote MCC difference spans roughly
+$\pm 0.05$, which would not exclude a quality loss a practitioner would care
+about. For the fusion analysis the IEDB subset at \NestedIedbSequences{}
+antigens carries more weight on ROC-AUC and average precision, where it has no
+tied folds. On the thresholded metrics its informative-fold count is closer to
+BP3C50ID's and we do not claim it is better powered there.
+
+\paragraph{The language-model tier is the smallest available checkpoint.} The
+PLM results use \texttt{esm2\_t6\_8M\_UR50D}, chosen for the hardware at hand.
+Conclusions about the PLM family are conclusions about an 8M-parameter frozen
+encoder and should not be read as characterising what language-model features
+can contribute to this task.
+
+\paragraph{One routing signal, one validation design.} Routing decisions come
+from mean per-residue local uncertainty, selected on a single grouped validation
+split per seed. Repeated grouped resampling of the validation split would give a
+better picture of how stable the selected thresholds are; we vary the seed,
+which moves the split, but we do not separate the two sources of variation.
+
+\paragraph{The IEDB subset's sampling rule is not recorded.} Its source and
+identity filter are established (Section~\ref{sec:datasets}), but how the
+\IedbSubsetTest{} test and \IedbSubsetTrain{} training antigens were drawn from
+the \IedbSourceSequences{} available is not captured in any script we could
+find. The selection is therefore reproducible in its inputs but not in its
+sampling. We state this rather than reconstruct a rule after the fact, since a
+plausible-looking rule invented now would be indistinguishable in the write-up
+from one that was actually followed, which is the failure this paper is about.
+What we can do is pin down the set: the released manifest lists every test
+antigen by accession, so the evaluation subset is identified exactly even
+though the draw that produced it is not. The consequence for the reader is
+that the IEDB arm should be treated as a second dataset of opportunity rather
+than as a designed replication, and we do not rest the paper's conclusions on
+it.

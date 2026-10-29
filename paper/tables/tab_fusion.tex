@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\caption{The fusion effect under two selection protocols. The test-derived protocol chooses the mixing weight and the decision threshold on the same split it reports; the nested protocol chooses both inside the training folds of a leave-one-sequence-out loop. Intervals are 95\% bootstrap intervals over per-antigen differences.}
+\label{tab:fusion}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Split & Protocol & Weight & $\Delta$ROC-AUC & $\Delta$MCC & Antigens improved \\
+\midrule
+BP3C50ID external test & test-derived & 0.90 & +0.0018 & +0.0115 & -- \\
+ & nested (LOSO) & 0.90 & -0.0005 & -0.0329 & 7/15 \\
+ & & \tiny[0.55, 0.90] & \tiny[-0.0033, +0.0021] & \tiny[-0.0955, +0.0088] & \\
+\addlinespace
+IEDB bounded subset & test-derived & 0.95 & +0.0012 & +0.0012 & -- \\
+ & nested (LOSO) & 0.95 & +0.0008 & +0.0014 & 25/47 \\
+ & & \tiny[0.85, 0.95] & \tiny[-0.0010, +0.0027] & \tiny[-0.0037, +0.0066] & \\
+\bottomrule
+\end{tabular}
+\end{table*}

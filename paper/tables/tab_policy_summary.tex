@@ -1,0 +1,22 @@
+\begin{table*}[t]
+\centering
+\caption{Routing-policy performance on the BP3C50ID external split under antigen-level resampling. Intervals are 95\% two-way bootstrap intervals over antigens and seeds (15 antigens, 10 seeds, 2000 resamples), so they carry the uncertainty that matters for a claim about other antigens. Carbon is a model-based estimate, not a metered measurement (Section~\ref{sec:cost-accounting}).}
+\label{tab:policy-summary}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Policy & MCC & ROC-AUC & Latency (ms) & Raw-sequence share \\
+\midrule
+local-only & 0.167 \tiny[0.100, 0.229] & 0.659 \tiny[0.596, 0.712] & 0.4 \tiny[0.4, 0.5] & 0.000 \tiny[0.000, 0.000] \\
+edge-only & 0.209 \tiny[0.150, 0.266] & 0.678 \tiny[0.621, 0.726] & 42.4 \tiny[37.2, 48.2] & 1.000 \tiny[1.000, 1.000] \\
+adaptive-split & 0.192 \tiny[0.121, 0.255] & 0.673 \tiny[0.611, 0.724] & 13.6 \tiny[4.4, 24.0] & 0.285 \tiny[0.087, 0.507] \\
+carbon-guard & 0.165 \tiny[0.091, 0.233] & 0.658 \tiny[0.595, 0.711] & 6.6 \tiny[1.0, 14.5] & 0.133 \tiny[0.013, 0.293] \\
+\midrule
+PLM local-only & 0.195 \tiny[0.124, 0.259] & 0.678 \tiny[0.614, 0.739] & 29.6 \tiny[17.2, 51.0] & 0.000 \tiny[0.000, 0.000] \\
+PLM edge-only & 0.209 \tiny[0.133, 0.280] & 0.691 \tiny[0.623, 0.755] & 68.3 \tiny[54.3, 87.6] & 1.000 \tiny[1.000, 1.000] \\
+PLM region-constrained & 0.219 \tiny[0.132, 0.310] & 0.690 \tiny[0.620, 0.760] & 68.3 \tiny[54.3, 87.6] & 1.000 \tiny[1.000, 1.000] \\
+PLM adaptive-split & 0.199 \tiny[0.124, 0.268] & 0.680 \tiny[0.615, 0.739] & 47.0 \tiny[29.3, 70.5] & 0.273 \tiny[0.107, 0.473] \\
+PLM conformal-guard & 0.199 \tiny[0.124, 0.268] & 0.680 \tiny[0.615, 0.739] & 47.0 \tiny[29.3, 70.5] & 0.273 \tiny[0.107, 0.473] \\
+\bottomrule
+\end{tabular}
+\end{table*}

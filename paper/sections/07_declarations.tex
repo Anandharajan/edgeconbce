@@ -1,0 +1,49 @@
+\section*{Declarations}
+
+\paragraph{Data and code availability.} The benchmark harness, the analysis
+modules that produce every table and figure in this paper, and the raw
+per-seed result artifacts are available at
+\url{https://github.com/Anandharajan/edgeconbce}. A single command
+(\texttt{regenerate.sh}) rebuilds the generated-number file, all tables, all
+figures and this manuscript from the stored results. The repository is
+archived on Zenodo at acceptance and the DOI will replace this URL in the
+published version.
+
+The BP3C50ID training and external test splits, and the
+\texttt{\IedbSourceFile{}} collection from which the second evaluation set is
+drawn, are redistributed by the Technical University of Denmark alongside
+BepiPred-3.0. We do not republish them, and the repository contains no antigen
+sequences from either source. The BepiPred-3.0 predictions used as the
+reference were obtained from the official service.
+
+The rule by which the \IedbSubsetTest{} test and \IedbSubsetTrain{} training
+antigens were drawn from that collection was not recorded when the subset was
+made, and we have not been able to recover it. We therefore release the
+identity of the evaluation subset instead
+(\texttt{data/iedb\_subset\_manifest.csv}), which lists every test antigen by
+accession, so that the set itself can be reconstructed from the source
+collection even though the draw cannot be repeated. The
+\IedbSubsetTrain{} training antigens are counted in the released artifacts but
+not identified, and we do not reconstruct them after the fact.
+
+\paragraph{Ethics.} This study uses only published protein sequence data. No
+human participants, human tissue, animal subjects or personally identifying
+information were involved, and no ethics approval was therefore required.
+
+\paragraph{Funding.} This research did not receive any specific grant from
+funding agencies in the public, commercial, or not-for-profit sectors.
+
+\paragraph{Competing interests.} The author declares that he has no known
+competing financial interests or personal relationships that could have
+appeared to influence the work reported in this paper.
+
+\paragraph{Declaration of generative AI in the writing process.} During the
+preparation of this work the author used generative AI tools to assist with
+the work. The author reviewed and edited all content, verified every result
+reported here, and takes full responsibility for the content of the published
+article.
+
+\paragraph{CRediT author statement.} \textbf{Anandharajan TRV:}
+Conceptualization, Methodology, Software, Validation, Formal analysis,
+Investigation, Data curation, Writing --- original draft, Writing --- review
+and editing, Visualization, Supervision, Project administration.

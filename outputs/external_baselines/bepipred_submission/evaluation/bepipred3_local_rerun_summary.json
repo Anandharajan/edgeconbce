@@ -1,0 +1,141 @@
+{
+  "project": "edgecon-bce",
+  "analysis": "bepipred3_local_rerun_import",
+  "created_at_utc": "2026-06-15T03:08:54.882641+00:00",
+  "system": {
+    "python_version": "3.14.3",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "edgeconbce_version": "0.1.0"
+  },
+  "threshold": 0.1512,
+  "truth_fasta_path": "BP3C50ID_external_test_set.fasta",
+  "prediction_fasta_path": "outputs\\external_baselines\\bepipred_submission\\bepipred3_results\\Bcell_epitope_preds.fasta",
+  "raw_score_csv_path": "outputs\\external_baselines\\bepipred_submission\\bepipred3_results\\raw_output.csv",
+  "baseline_row": {
+    "model": "BepiPred-3.0 official local rerun",
+    "source_type": "local_rerun",
+    "dataset": "BP3C50ID external test (15 antigens)",
+    "roc_auc": 0.770516,
+    "mcc": 0.315503,
+    "f1": 0.45973,
+    "average_precision": 0.414392,
+    "latency_ms": null,
+    "total_gco2e": null,
+    "raw_sequence_share_rate": null,
+    "notes": "Imported from official BepiPred-3.0 downloaded output on the BP3C50ID external FASTA.",
+    "source_url": "https://services.healthtech.dtu.dk/services/BepiPred-3.0/"
+  },
+  "per_sequence_rows": [
+    {
+      "sequence_id": "7lj4_B",
+      "length": 289,
+      "true_positive_residues": 30,
+      "predicted_positive_residues": 87,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "4xak_A",
+      "length": 213,
+      "true_positive_residues": 67,
+      "predicted_positive_residues": 182,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "4ypg_D",
+      "length": 184,
+      "true_positive_residues": 72,
+      "predicted_positive_residues": 134,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "7chz_I",
+      "length": 152,
+      "true_positive_residues": 54,
+      "predicted_positive_residues": 94,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "5d8j_A",
+      "length": 133,
+      "true_positive_residues": 26,
+      "predicted_positive_residues": 62,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "3pnw_O",
+      "length": 61,
+      "true_positive_residues": 20,
+      "predicted_positive_residues": 31,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "6y6c_A",
+      "length": 118,
+      "true_positive_residues": 27,
+      "predicted_positive_residues": 78,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "5f72_K",
+      "length": 285,
+      "true_positive_residues": 36,
+      "predicted_positive_residues": 71,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "6u6u_R",
+      "length": 197,
+      "true_positive_residues": 25,
+      "predicted_positive_residues": 74,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "4qci_D",
+      "length": 96,
+      "true_positive_residues": 18,
+      "predicted_positive_residues": 56,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "7jum_A",
+      "length": 176,
+      "true_positive_residues": 46,
+      "predicted_positive_residues": 126,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "5th9_A",
+      "length": 222,
+      "true_positive_residues": 25,
+      "predicted_positive_residues": 35,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "6hga_B",
+      "length": 263,
+      "true_positive_residues": 12,
+      "predicted_positive_residues": 31,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "2xwt_C",
+      "length": 234,
+      "true_positive_residues": 34,
+      "predicted_positive_residues": 93,
+      "has_raw_scores": true
+    },
+    {
+      "sequence_id": "6vtw_A",
+      "length": 47,
+      "true_positive_residues": 15,
+      "predicted_positive_residues": 40,
+      "has_raw_scores": true
+    }
+  ],
+  "reports": {
+    "extra_baselines_json": "outputs\\external_baselines\\bepipred_submission\\evaluation\\bepipred3_local_rerun_baseline.json",
+    "per_sequence_csv": "outputs\\external_baselines\\bepipred_submission\\evaluation\\bepipred3_per_sequence_summary.csv",
+    "markdown": "outputs\\external_baselines\\bepipred_submission\\evaluation\\bepipred3_local_rerun_summary.md",
+    "json": "outputs\\external_baselines\\bepipred_submission\\evaluation\\bepipred3_local_rerun_summary.json"
+  }
+}

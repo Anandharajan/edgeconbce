@@ -1,0 +1,330 @@
+{
+  "project": "edgecon-bce",
+  "round": 2,
+  "panel": [
+    "R2 evaluation and statistics (opus)",
+    "R3 novelty and prior work (opus)"
+  ],
+  "verified_by_reviewer": [
+    "BepiPred-3.0 baseline row recomputed independently: exact match",
+    "Nested BP3 result reproduced bit-exactly from the shipped module",
+    "Nested IEDB result reproduced bit-exactly",
+    "No label leakage found in the leave-one-sequence-out loop"
+  ],
+  "issues": [
+    {
+      "id": "R2-001",
+      "severity": "fatal",
+      "category": "statistics",
+      "location": "tab_policy_summary, tab_paired, abstract",
+      "summary": "Routing-policy confidence intervals resample seeds on a fixed 15-antigen split, so they measure run-to-run dispersion, not sampling uncertainty over antigens. Antigen-level intervals are about 16x wider.",
+      "fix": "Recompute all routing intervals with a two-way bootstrap over antigens and seeds; restate the claims that do not survive.",
+      "status": "in_progress",
+      "history": [
+        {
+          "round": 1,
+          "status": "in_progress",
+          "note": "pkg/policy_resampling.py written and running; tables and macros already wired to consume it."
+        }
+      ]
+    },
+    {
+      "id": "R2-002",
+      "severity": "major",
+      "category": "statistics",
+      "location": "abstract, results 4.1, tab_paired",
+      "summary": "Selective metric reporting: the 'no quality difference vs edge-only' claim rests on MCC alone, while the paper's own macros give dAUC -0.005 [-0.010,-0.001] and dAP -0.007 [-0.012,-0.002], both excluding zero and favouring edge-only.",
+      "fix": "Report all four quality metrics for every comparison; restate the claim to match.",
+      "status": "in_progress",
+      "history": [
+        {
+          "round": 1,
+          "status": "in_progress",
+          "note": "table_paired_antigen now emits MCC, ROC-AUC, AP and F1 for every comparison with significance marks."
+        }
+      ]
+    },
+    {
+      "id": "R2-003",
+      "severity": "major",
+      "category": "soundness",
+      "location": "methods 3.4, results 4.1",
+      "summary": "Carbon is dominated by the embodied per-request constant, not by latency; the stated mechanism ('the local pass is not negligible beside the remote pass') is contradicted by the model, where the local pass is 0.24% of the remote pass. The 'proportional to measured latency' sentence is false.",
+      "fix": "Correct the mechanism, give the operational/embodied split, and state that carbon differences are request-count differences.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "Methods rewritten with generated macros for both terms; closed-form threshold added in results."
+        }
+      ]
+    },
+    {
+      "id": "R2-004",
+      "severity": "major",
+      "category": "integrity",
+      "location": "results 4.2",
+      "summary": "The six-decimal replication claim was never executed: the artifact recorded published_artifact_not_available.",
+      "fix": "Run the comparison against fusion_report.json and report the realised deviation, or weaken the claim.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "Executed: 44 grid rows compared, max deviation 4.9e-07, within 1e-06 tolerance; status 'reproduced' recorded in the artifact and cited via macros."
+        }
+      ]
+    },
+    {
+      "id": "R2-005",
+      "severity": "major",
+      "category": "statistics",
+      "location": "tab_fusion, results 4.4, limitations",
+      "summary": "The IEDB MCC/F1 null was diluted by 39 of 47 exactly-tied folds, so it rested on 8 informative antigens; the reported CI was about 5.6x too narrow, and the 'better powered' claim did not hold for MCC.",
+      "fix": "Report tie counts; report intervals over informative folds; restrict the better-powered claim to AUC and AP.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "Root cause was R2-006. With the threshold fitted on training folds, IEDB MCC ties fell 39->8 and BP3 6->0. Tie counts now recorded in the artifacts."
+        }
+      ]
+    },
+    {
+      "id": "R2-006",
+      "severity": "major",
+      "category": "soundness",
+      "location": "pkg/nested_fusion.py, methods 3.6",
+      "summary": "The per-fold operating threshold was the quantile of the held-out antigen's own blended scores: transductive, not deployable, and contrary to the Methods description. No label leakage (confirmed by test and by reviewer).",
+      "fix": "Fit the threshold on the training folds' scores and apply it unchanged; correct the Methods sentence.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "Fixed in code and text; all 14 tests still pass; fusion conclusions unchanged."
+        }
+      ]
+    },
+    {
+      "id": "R2-007",
+      "severity": "major",
+      "category": "reproducibility",
+      "location": "pkg/nested_fusion.py, artifacts",
+      "summary": "The --reference-threshold value that produced the headline results was not recorded in the artifacts, and the CLI default produces materially different numbers.",
+      "fix": "Record the threshold and its provenance in the report; document the exact invocations.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "reference_threshold and operating_rate_source now written into every report and shown in the markdown header; regenerate.sh ships the exact invocations."
+        }
+      ]
+    },
+    {
+      "id": "R2-008",
+      "severity": "minor",
+      "category": "soundness",
+      "location": "methods 3.6, tab_fusion pooled row",
+      "summary": "The code uses a training-fitted ECDF, not a global rank transform, so the stated ROC-AUC invariance does not hold; pooled out-of-fold ranking metrics mix per-fold scales.",
+      "fix": "Correct the Methods description; prefer per-fold paired metrics over the pooled row.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "Methods now describes the training-fitted ECDF and states the residual effect explicitly."
+        }
+      ]
+    },
+    {
+      "id": "R2-009",
+      "severity": "minor",
+      "category": "evaluation",
+      "location": "scenario_analysis_sci",
+      "summary": "A scenario/robustness analysis exists in the artifacts and is never reported, including an informative 'remote tier unavailable' result.",
+      "fix": "Report the scenario table and state which axes were varied and which were not.",
+      "status": "in_progress",
+      "history": [
+        {
+          "round": 1,
+          "status": "in_progress",
+          "note": "table_scenarios written; to be referenced from the results section."
+        }
+      ]
+    },
+    {
+      "id": "R2-010",
+      "severity": "nit",
+      "category": "presentation",
+      "location": "abstract",
+      "summary": "'the most carbon-intensive policy we measure' uses measurement language for a modelled quantity.",
+      "fix": "Reword to 'in our cost model'.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "R2-011",
+      "severity": "nit",
+      "category": "presentation",
+      "location": "tab_policy_summary",
+      "summary": "Degenerate zero-width intervals printed as 95% bootstrap confidence intervals.",
+      "fix": "Print them as deterministic, or replace with antigen-level intervals.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "Superseded by R2-001: antigen-level intervals are non-degenerate."
+        }
+      ]
+    },
+    {
+      "id": "R3-001",
+      "severity": "major",
+      "category": "prior-work",
+      "location": "background 2.2, discussion 5.1, contribution 2",
+      "summary": "The carbon inversion is an instance of the known offloading energy threshold (Kumar & Lu 2010, doi:10.1109/MC.2010.98), and has been observed for decoding cascades (arXiv:2602.09113).",
+      "fix": "Cite both; recast the contribution as locating the threshold for this task.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "Cited in background and discussion; contribution 2 reworded; closed-form threshold added."
+        }
+      ]
+    },
+    {
+      "id": "R3-002",
+      "severity": "major",
+      "category": "prior-work",
+      "location": "background 2.3, methods 3.4",
+      "summary": "The carbon instrument follows Green Algorithms (doi:10.1002/advs.202100707), with a bioinformatics precedent (doi:10.1093/molbev/msac034); neither was cited.",
+      "fix": "Cite both and state that the energy model follows that formulation.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "R3-003",
+      "severity": "major",
+      "category": "prior-work",
+      "location": "background 2.4, discussion 5.2, contribution 3",
+      "summary": "The nested-selection correction re-demonstrates a result established in bioinformatics by Varma & Simon (2006) and Jelizarow et al. (2010).",
+      "fix": "Cite them; reframe the contribution as an instance rather than a method.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "Discussion now says so explicitly and promotes the interval-does-not-protect point as the distinct contribution."
+        }
+      ]
+    },
+    {
+      "id": "R3-004",
+      "severity": "major",
+      "category": "clarity",
+      "location": "abstract, introduction, contribution 3",
+      "summary": "The manuscript did not say where the earlier fusion result was reported, so a reader could take it for a published correction.",
+      "fix": "State plainly that it was unpublished and scope the claim.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "R3-005",
+      "severity": "major",
+      "category": "prior-work",
+      "location": "background 2.1, discussion 5.3",
+      "summary": "Related work missed 2024-2026 conformational predictors: SEMA 2.0, Israeli & Louzoun, and the Gabellieri et al. 2026 review.",
+      "fix": "Add them; use the 2026 review as the survey anchor.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": "All three cited; note that the reviewer's title for the Israeli & Louzoun DOI was wrong and was corrected against the record."
+        }
+      ]
+    },
+    {
+      "id": "R3-006",
+      "severity": "minor",
+      "category": "presentation",
+      "location": "abstract, contribution 1",
+      "summary": "'Benchmark' oversells a single 15-antigen split; AsEP (arXiv:2407.18184) is the point of contrast for scale.",
+      "fix": "Call it a measurement harness and cite AsEP.",
+      "status": "fixed",
+      "history": [
+        {
+          "round": 1,
+          "status": "fixed",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "R3-007",
+      "severity": "major",
+      "category": "integrity",
+      "location": "iedb dataset provenance",
+      "summary": "The IEDB subset's provenance block names the DTU BP3C50ID files while pointing at IEDB subset paths; the better-powered leg of the fusion result rests on it. RESOLVED: the subset derives from IEDBSeqsNotSharedAt20ID.fasta (3560 IEDB sequences filtered to <=20% identity against BP3), length-bounded to 45-595 residues. All 252 subset sequences are present verbatim in that source.",
+      "fix": "Provenance documented in the datasets section; independence verified directly (0 shared identifiers, 0 shared sequences, 0.000 max 10-mer containment against all 358 BP3 sequences). The artifact's mislabelled data_sources block is fixed in edgeconbce_real_benchmark_v2.py. Only the sampling rule remains unrecorded.",
+      "status": "verified",
+      "history": [
+        {
+          "round": 1,
+          "status": "open",
+          "note": "Blocker for submission. Flagged in methods, limitations and PROGRESS.md as a PENDING for the author."
+        },
+        {
+          "round": 2,
+          "status": "verified",
+          "note": "Source identified and independence measured three ways."
+        }
+      ]
+    },
+    {
+      "id": "CAR-001",
+      "severity": "major",
+      "category": "reproducibility",
+      "location": "carbon accounting",
+      "summary": "The embodied constants implied by the recorded per-antigen totals (0.1200 local, 0.1381 remote) do not match those declared in the stored device configuration (0.6000, 0.2125), and the two discrepancies are not a common factor. RESOLVED: the embodied term carries a device-utilisation fraction (0.20 local, 0.65 edge) applied as a literal in the benchmark script and recorded in no configuration. With it the recorded totals reproduce to 0e+00 gCO2e across all 47 antigens checked.",
+      "fix": "Documented in the cost-accounting section with a sensitivity analysis; the fractions are now written into the artifact by real_benchmark.py. Lifting them into the YAML config remains a follow-up.",
+      "status": "verified",
+      "history": [
+        {
+          "round": 1,
+          "status": "open",
+          "note": "Found during this session's own carbon decomposition, independently of the panel. Policy ordering is unaffected; absolute values are not reproducible from the stored config."
+        },
+        {
+          "round": 2,
+          "status": "verified",
+          "note": "Reconstructed exactly; 1 of 5 alternative fraction settings would flip the ordering."
+        }
+      ]
+    }
+  ]
+}

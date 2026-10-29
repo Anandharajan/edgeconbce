@@ -1,0 +1,91 @@
+\section{Introduction}
+\label{sec:introduction}
+
+A laboratory that has just expressed a new antigen and wants to know where its
+surface-exposed B-cell epitopes are has good computational options, and a
+practical problem in using them. The best current conformational predictors are built on
+protein language models whose weights run to billions of parameters
+\citep{lin2023esm}. Running one well needs either a workstation with a capable
+accelerator or, far more commonly, uploading the sequence to a hosted service.
+Neither is comfortable for every group, and accelerators are unevenly
+distributed.
+For antigens from unpublished constructs, from clinical isolates, or from an
+industrial pipeline, the sequence itself is the sensitive object: sending it to
+a third-party endpoint is a disclosure decision rather than a technical one.
+
+The obvious middle path is to keep a small model on the local machine and call
+the remote service only when the local model is unsure. Systems research has
+established the idea under names such as split computing, model cascades and
+early exiting \citep{matsubara2022split}. Its appeal in a screening setting is
+easy to state: most antigens should be easy, the easy ones never leave the
+device, and the hard minority gets the benefit of the larger model. What such a
+scheme costs and returns is much less clear. A laboratory cares about three
+quantities at once: how good the predictions are, how long screening takes, and
+how much sequence leaves the building. We measure all three on the same runs
+rather than arguing them separately.
+
+We build a measurement harness that
+runs a set of routing policies, from always-local through uncertainty-triggered
+routing to always-remote, on identical inputs with identical seeds. It records
+predictive quality, latency, data movement and an energy model per antigen.
+Over \NumSeeds{} seeds on the BP3C50ID external split, the answer arrives with
+intervals attached: routing on local uncertainty gives up nothing detectable in
+quality against always-remote execution while cutting latency to roughly a
+third and keeping most raw sequences on the device. It also gives an answer
+nobody in this project expected. A routed antigen is charged twice: once for
+the local pass that decides it is hard, once for the remote pass that then
+processes it. Routing is therefore the most carbon-intensive policy in the
+comparison. The green framing that usually accompanies edge inference does not
+survive contact with the accounting, and Section~\ref{sec:routing-results}
+gives the condition under which it would.
+
+The paper also re-examines an earlier unpublished analysis of our own, which
+reported that blending the scores of our local predictor with those of
+BepiPred-3.0 \citep{clifford2022bepipred} improved on BepiPred-3.0 alone. The
+mixing weight
+and the decision threshold had both been chosen by scanning the evaluation
+split and keeping the configuration that scored best.
+\citet{kapoor2023leakage} identify that step as
+the most common form of leakage in applied machine learning. It is easy to
+commit, because a sensitivity analysis and a model-selection procedure look
+superficially alike. We reproduce the original numbers under the original
+protocol, to within \TunedBpThreeReplicationMaxDiff{}. We then re-estimate the
+same quantity with weight and
+threshold chosen inside the training folds of a leave-one-sequence-out loop.
+The advantage does not survive on either dataset. On BP3C50ID the difference
+against BepiPred-3.0 is no longer detectable and the MCC estimate changes
+sign; on a larger IEDB-derived subset, which fuses against our own local
+predictor rather than BepiPred-3.0, the difference is likewise indistinguishable
+from zero. On both, the selection procedure places almost all of the weight on
+the reference predictor rather than on ours. Neither dataset is large enough to
+show that fusion cannot help, and we do not claim that it does not.
+
+The literature this belongs to is accumulating fusion and ensemble results
+faster than it scrutinises how their combination parameters were chosen, and
+the corrective is cheap: the nested protocol here costs one extra loop over
+sequences and needs no new data.
+
+\paragraph{Contributions.} Concretely, this paper offers the following.
+\begin{enumerate}
+  \item A reproducible measurement harness for conformational B-cell epitope
+  screening. It records predictive quality, latency, data movement and modelled
+  energy together, per antigen and per seed, and states the provenance of each
+  cost quantity (Section~\ref{sec:methods}).
+  \item A \NumSeeds{}-seed characterisation of five local--edge routing
+  policies on BP3C50ID, with bootstrap intervals and paired sign tests. It
+  includes a closed-form condition locating where the known offloading energy
+  threshold \citep{kumar2010cloud} falls for this task: routing increases
+  modelled carbon once the routed fraction exceeds \CarbonBreakEvenRate{}, and
+  a quality-tuned policy routes about twice that often
+  (Section~\ref{sec:routing-results}).
+  \item An instance, in conformational epitope prediction, of the
+  selection-bias mechanism documented in bioinformatics since
+  \citet{varma2006bias}: we reproduce a previously reported fusion advantage
+  under its original, test-derived protocol, then re-estimate it leakage-free
+  on two datasets, where it is no longer detectable and the estimate changes
+  sign (Section~\ref{sec:fusion-results}).
+  \item The observation that, given a free choice on either dataset, the
+  selection procedure assigns our predictor almost no weight. We report the
+  per-fold selections rather than summarising them away
+  (Section~\ref{sec:weight-transfer}).
+\end{enumerate}

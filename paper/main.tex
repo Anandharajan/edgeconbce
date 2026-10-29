@@ -1,0 +1,108 @@
+% EdgeConBCE -- manuscript for Computational Biology and Chemistry.
+%
+% Build: pdflatex -> bibtex -> pdflatex x2, or use ../build.sh which also
+% fails the build on undefined references and unresolved number macros.
+%
+% Every reported quantity is a macro from generated_numbers.tex, which is
+% produced by pkg/make_numbers.py from the result artifacts. Do not type a
+% number into this file.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage[round,authoryear]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{lineno}
+\usepackage{caption}
+
+\captionsetup{font=small,labelfont=bf}
+\setlength{\parskip}{0pt}
+\linenumbers
+
+\newcommand{\pending}[1]{\textcolor{red}{\textbf{[PENDING: #1]}}}
+\hyphenation{turn-around re-sam-pling}
+\input{generated_numbers}
+
+\title{\bfseries Local--edge routing for conformational B-cell epitope
+prediction: what survives leakage-free selection}
+
+\author{%
+  Anandharajan TRV\thanks{Corresponding author.
+  E-mail: \texttt{trvanandharajan@gmail.com}}\\[2pt]
+  \normalsize Department of Electronics and Communication Engineering\\
+  \normalsize St.\ Joseph College of Engineering, Sriperumbudur,\\
+  \normalsize Chennai 602117, Tamil Nadu, India
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Screening antigens for conformational B-cell epitopes increasingly relies on
+protein language models. Those models are too heavy for the laboratory
+workstations where candidate antigens are first triaged, which pushes
+laboratories towards sending raw sequences to a remote service. We study the
+intermediate option. Each antigen is routed
+to local or remote execution according to the local model's own uncertainty.
+On the same runs we measure predictive quality, latency,
+modelled carbon and the fraction of antigens whose raw sequence leaves the
+device, resampling over antigens rather than over re-runs. On the BP3C50ID
+external split, routing runs at \(\AAdaptiveSplitLatency{}\,\)ms per antigen
+against \(\AEdgeOnlyLatency{}\,\)ms for always-remote execution, a difference of
+\(\ADAsVsEoLatency{}\,\)ms (95\% CI
+[\ADAsVsEoLatencyLo{}, \ADAsVsEoLatencyHi{}]). It transmits the raw sequence of
+\AAdaptiveSplitRawShare{} of antigens, where always-remote execution transmits
+all of them. Its effect on predictive quality is not resolved at this sample
+size. Against always-remote execution all four quality metrics have intervals
+containing zero, and against always-local execution only F1 separates them
+(\(\Delta\)F1 \ADAsVsLoFOne{} [\ADAsVsLoFOneLo{}, \ADAsVsLoFOneHi{}]). The same
+comparisons appear decisive under the seed-only intervals that repeated
+benchmarking conventionally reports, which on a fixed \AntigenCount{}-antigen
+split measure re-run dispersion rather than sampling uncertainty. The cost
+accounting runs the other way: in our model routing is the most carbon-intensive
+policy, for any positive cost constants, though the routed fraction at which
+that begins depends on constants we assume rather than measure. We give in closed form the routed
+fraction above which this must occur, \CarbonBreakEvenRate{} here. We then
+re-examine an earlier unpublished result of our own, that fusing our local
+predictor with BepiPred-3.0 improves on BepiPred-3.0 alone. Reproducing the
+original protocol to within \TunedBpThreeReplicationMaxDiff{} across all
+\TunedBpThreeReplicationRows{} of its stored grid entries, we show that the
+mixing weight and decision threshold were selected on the evaluation split.
+Under leave-one-sequence-out nested selection the advantage is no longer
+detectable on BP3C50ID (\(\Delta\)ROC-AUC \NestedBpThreeDeltaAuc{}
+[\NestedBpThreeDeltaAucLo{}, \NestedBpThreeDeltaAucHi{}]), and the MCC
+estimate changes sign, from \TunedBpThreeDeltaMcc{} to
+\NestedBpThreeDeltaMcc{}. A second arm on a \NestedIedbSequences{}-antigen
+IEDB subset behaves the same way (\NestedIedbDeltaAuc{}
+[\NestedIedbDeltaAucLo{}, \NestedIedbDeltaAucHi{}]), though it fuses against
+our own local predictor rather than BepiPred-3.0 and so tests a different
+pair. In both arms the folds place almost all weight on the reference
+predictor. These sample sizes cannot establish that fusion does not help; what
+they do show is how far the selection step moves the estimate. On benchmarks
+of this size, the conventional analyses report more confidence than the data
+supports.
+\end{abstract}
+
+\noindent\textbf{Keywords:} conformational B-cell epitope prediction; edge
+inference; model selection; data leakage; reproducible benchmarking
+
+\input{sections/01_introduction}
+\input{sections/02_background}
+\input{sections/03_methods}
+\input{sections/04_results}
+\input{sections/05_discussion}
+\input{sections/06_limitations}
+\input{sections/07_declarations}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

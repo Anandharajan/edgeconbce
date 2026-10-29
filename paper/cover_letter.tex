@@ -1,0 +1,73 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\pending}[1]{\textcolor{red}{\textbf{[PENDING: #1]}}}
+\pagestyle{empty}
+\begin{document}
+\noindent Anandharajan TRV\\
+Department of Electronics and Communication Engineering\\
+St.\ Joseph College of Engineering\\
+Sriperumbudur, Chennai 602117, India\\[1em]
+\noindent \today\\[1.5em]
+
+\noindent The Editors\\
+\emph{Computational Biology and Chemistry}\\[1.5em]
+
+\noindent Dear Editors,\\[0.8em]
+
+I am submitting ``Local--edge routing for conformational B-cell epitope
+prediction: what survives leakage-free selection'' for consideration as a
+research article.
+
+The paper does two things. It characterises, over ten seeds with confidence
+intervals, what a laboratory gains by routing antigens between a local
+predictor and a remote one according to the local model's uncertainty: roughly
+a third of the latency of always-remote execution and a large reduction in how
+many antigen sequences leave the device, with no quality difference resolved
+either way at the fifteen antigens available. The same
+accounting shows that routing does \emph{not} reduce modelled carbon --- it is
+the most carbon-intensive policy in our cost model, because the model that decides
+whether to route is not cheap relative to the one it gates. That contradicts
+the usual framing of edge inference as an environmental measure, and the
+mechanism is general enough to matter beyond this application.
+
+The second half is a negative result, and I want to be direct with you about
+it. An earlier, unpublished analysis in this project found that fusing our
+local predictor with BepiPred-3.0 improved on BepiPred-3.0 alone. In preparing
+this manuscript I found that the fusion weight and the decision threshold had
+both been selected on the same split the result was reported on. The paper
+reproduces those earlier figures under their original protocol, to within the
+precision at which the original grid was stored, then re-estimates the same
+quantity with both parameters chosen by nested leave-one-sequence-out
+selection. The advantage is no longer detectable, and the MCC estimate changes
+sign. The datasets are too small to show that fusion cannot help, and I do not
+claim that; what they do show is how far the selection step moves the
+estimate. I report this rather than quietly dropping it, because the selection
+step involved is easy to commit, hard to see in a write-up, and sufficient here
+to turn a null result into a plausible-looking positive one.
+
+The work fits the journal's scope in computational life sciences: its subject
+is how conformational B-cell epitope predictors are selected and evaluated,
+and its primary contribution is a leakage-free re-estimation of a published
+style of fusion result. It follows directly from Attique et al.,
+``DeepBCE'', published in this journal in 2023, which motivated the project.
+I make no claim to state-of-the-art predictive accuracy and say so explicitly;
+our standalone predictor remains below BepiPred-3.0 on BP3C50ID.
+
+All code, the raw per-seed results, and a single script that regenerates every
+number, table and figure in the manuscript are available at
+\url{https://github.com/Anandharajan/edgeconbce}, and will be archived on
+Zenodo with a DOI at acceptance.
+
+I am the sole author and the corresponding author. The manuscript is original,
+is not under consideration elsewhere, and I have approved it for submission.
+Funding, competing interests and the use of generative AI tools are declared in
+the manuscript.
+
+\vspace{1em}
+\noindent Yours sincerely,\\[1.5em]
+\noindent Anandharajan TRV
+
+\end{document}

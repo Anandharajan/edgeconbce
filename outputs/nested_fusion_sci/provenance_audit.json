@@ -1,0 +1,69 @@
+{
+  "analysis": "provenance_audit",
+  "carbon_constants": {
+    "missing_term": "device utilisation fraction applied to the embodied term",
+    "local_fraction_used": 0.2,
+    "edge_fraction_used": 0.65,
+    "declared_embodied_local": 0.6,
+    "declared_embodied_edge": 0.2125,
+    "effective_embodied_local": 0.12,
+    "effective_embodied_edge": 0.138125,
+    "max_abs_error_local_gco2e": 0.0,
+    "max_abs_error_edge_gco2e": 0.0,
+    "n_sequences_checked": 47,
+    "reconstructed": true,
+    "fraction_sensitivity": [
+      {
+        "local_fraction": 0.2,
+        "edge_fraction": 0.65,
+        "c_local": 0.1200069633571391,
+        "c_edge": 0.14053196180946934,
+        "break_even_route_rate": 0.14605217338499588
+      },
+      {
+        "local_fraction": 1.0,
+        "edge_fraction": 1.0,
+        "c_local": 0.6000069633571391,
+        "c_edge": 0.21490696180946933,
+        "break_even_route_rate": -1.7919382336673157
+      },
+      {
+        "local_fraction": 0.5,
+        "edge_fraction": 0.5,
+        "c_local": 0.3000069633571391,
+        "c_edge": 0.10865696180946934,
+        "break_even_route_rate": -1.7610468612513133
+      },
+      {
+        "local_fraction": 0.65,
+        "edge_fraction": 0.2,
+        "c_local": 0.39000696335713914,
+        "c_edge": 0.04490696180946934,
+        "break_even_route_rate": -7.684777318311033
+      },
+      {
+        "local_fraction": 0.1,
+        "edge_fraction": 0.9,
+        "c_local": 0.060006963357139106,
+        "c_edge": 0.19365696180946934,
+        "break_even_route_rate": 0.690137845825665
+      }
+    ],
+    "note": "The fractions are literals at the call site in the benchmark script and are recorded in no configuration file; with them the recorded totals reproduce exactly."
+  },
+  "iedb_provenance": {
+    "source_file": "IEDBSeqsNotSharedAt20ID.fasta",
+    "source_sequences": 3560,
+    "subset_train": 205,
+    "subset_test": 47,
+    "all_subset_sequences_found_in_source": true,
+    "length_bound_min": 45,
+    "length_bound_max": 595,
+    "bp3_sequences_compared": 358,
+    "exact_sequence_overlap_with_bp3": 0,
+    "id_overlap_with_bp3": 0,
+    "max_kmer_containment_vs_bp3": 0.0,
+    "kmer_size": 10,
+    "note": "The source file name states that these IEDB sequences do not share more than 20% identity with the BP3 data, so independence holds by construction; the measurements above test it directly."
+  }
+}

@@ -1,0 +1,112 @@
+\section{Background}
+\label{sec:background}
+
+\subsection{Conformational B-cell epitope prediction}
+
+A B-cell epitope is the part of an antigen that an antibody binds. Linear
+epitopes are contiguous in sequence; conformational epitopes, which are the
+large majority of what antibodies actually recognise, are assembled from
+residues that the folded structure brings together but that may be far apart in
+the chain. Prediction is therefore a per-residue binary labelling problem with
+two awkward properties: positives are a minority of residues, and the label
+depends on structural context that the sequence encodes only implicitly.
+
+Methods have moved through three broad generations. Propensity-scale approaches
+scored residues with physicochemical heuristics. Structure-based methods used
+solved or modelled structures to compute accessibility and protrusion.
+The current generation feeds representations from a pre-trained protein language
+model into a supervised head, which is how BepiPred-3.0 \citep{clifford2022bepipred}
+and structure-aware successors such as DiscoTope-3.0 \citep{hoie2024discotope}
+are built. Recent additions include the SEMA 2.0 web platform
+\citep{ivanisenko2024sema} and residue-level predictors built directly on ESM-2
+projections \citep{israeli2024single}. Both sit close to the PLM family
+evaluated here. \citet{gabellieri2026bcell} survey the field as it now
+stands. We use BepiPred-3.0 as the reference predictor on BP3C50ID, where it is the
+strongest openly runnable sequence-based baseline and the method a laboratory
+would realistically be choosing between. On the IEDB-derived subset we do not
+have BepiPred-3.0 predictions, so the reference there is our own local-only
+predictor. The two fusion arms therefore test different pairs, and we keep
+them separate throughout.
+
+Evaluation in this area is dominated by the BP3C50ID benchmark distributed with
+BepiPred-3.0, whose external test split holds \BepipredNumAntigens{} antigens
+(\BepipredResidues{} residues, \BepipredPositives{} of them positive). That is a
+small split, and its size is worth keeping in view when reading any comparison
+built on it, including ours. We report the Matthews correlation coefficient
+alongside ROC-AUC and average precision, because MCC behaves sensibly under the
+class imbalance that per-residue epitope labelling produces
+\citep{chicco2020mcc}. Under that imbalance, accuracy and F1 can both be high
+for a predictor that has learned little.
+
+\subsection{Splitting inference between a local device and a remote service}
+
+Running part of a model locally and part remotely is an old idea with a current
+name. The systems literature treats it as a scheduling problem. The task is to
+decide where each input is processed, given a local
+model, a remote model, and a per-input signal about difficulty, so that some
+combination of accuracy, latency, cost and bandwidth is optimised
+\citep{matsubara2022split}. The signal is usually the
+local model's own confidence. That makes the mechanism attractively simple, and
+it also introduces its characteristic failure: the decision is only as good as
+the calibration of the model making it.
+
+Whether offloading saves energy at all is a settled question in that
+literature. The answer depends on the ratio of computation offloaded to the
+overhead of offloading it. Below a threshold ratio, offloading costs more energy
+than it saves \citep{kumar2010cloud}. The same effect has been observed
+recently in model cascades, where a draft-and-verify decoding scheme consumed
+more energy than running the large model alone despite reducing latency
+\citep{dutta2026speculative}. Our contribution on this axis is not the
+phenomenon but the location of the threshold for this task, and the observation
+that per-residue epitope screening sits on the unfavourable side of it.
+
+Two things are different in the setting we study. The first is that the
+quantity a laboratory wants to minimise is often not bandwidth or cost but
+disclosure, meaning how many of its sequences are transmitted at all. That is a
+counting measure rather than a continuous one, and no accuracy-oriented
+objective captures it. The second is that the per-antigen compute is small
+enough that the routing decision is not free relative to the work it schedules.
+In large-model serving, a confidence check is negligible beside the inference it
+gates. In per-residue epitope screening on short sequences, it is not. The
+carbon results in Section~\ref{sec:routing-results} are a consequence of that
+ratio.
+
+\subsection{Accounting for energy and carbon}
+
+Reported carbon figures for machine-learning systems are rarely measurements.
+The common practice, which we follow and label as such, is to derive energy from
+a device power figure and a measured runtime. That energy is then converted to
+mass of carbon dioxide equivalent with a grid-intensity constant
+\citep{strubell2019energy,lacoste2019quantifying,patterson2021carbon}. Our
+energy model follows the formulation of Green Algorithms
+\citep{lannelongue2021green}, which also supplies the amortised-hardware term.
+That formulation has been applied to bioinformatics workloads specifically
+\citep{grealey2022carbon}. We claim no novelty in the instrument. The
+result is a model whose output is proportional to measured latency by
+construction. It is useful for comparing policies that run on the same hardware,
+since the proportionality constant cancels; it is not a measurement of what any
+particular laboratory's equipment would draw, and we are careful not to present
+it as one. Table~\ref{tab:provenance} records which of our reported quantities
+are measured and which are modelled.
+
+\subsection{Selection on the evaluation split}
+
+When a method has a free parameter --- an ensemble weight, a decision threshold,
+a fusion coefficient --- and that parameter is chosen by trying candidates and
+keeping whichever scores best on the data the paper reports, the reported score
+is biased upward. The bias grows with the number of candidates tried and
+shrinks with the size of the evaluation set. This is not a new observation.
+\citet{varma2006bias} demonstrated it for bioinformatics classifiers two decades
+ago and showed that nested resampling removes the bias.
+\citet{boulesteix2009overoptimism}
+named the resulting pattern over-optimism. \citet{jelizarow2010overoptimism}
+showed that re-evaluating a published positive result without its optimistic
+selection step can remove the advantage entirely. \citet{kapoor2023leakage}
+survey how widely the problem persists across applied machine-learning research
+and how often it is invisible in the write-up, because a table of candidate
+values reads as a sensitivity analysis whether or not the reported
+configuration was picked from it. The distinction that matters is not whether
+the sweep is shown but whether
+the reported configuration was chosen using the labels it is then scored
+against. Section~\ref{sec:fusion-protocol} sets out the two protocols we compare
+precisely enough for the difference to be checked.

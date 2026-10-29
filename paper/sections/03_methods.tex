@@ -1,0 +1,215 @@
+\section{Materials and methods}
+\label{sec:methods}
+
+\subsection{Datasets}
+\label{sec:datasets}
+
+The primary benchmark is BP3C50ID, the split distributed with BepiPred-3.0, in
+which training and external test antigens are separated at 50\% sequence
+identity. The external test split contains \BepipredNumAntigens{} antigens,
+\BepipredResidues{} residues and \BepipredPositives{} positive residues, a
+positive rate just under one residue in five. All BP3C50ID results below are on
+this external split; no model or policy parameter is fitted on it.
+
+A second evaluation uses a subset derived from the Immune Epitope Database
+\citep{vita2024iedb}, holding \IedbSubsetTest{} test antigens
+(\NestedIedbResidues{} residues, \NestedIedbPositives{} positive) alongside
+\IedbSubsetTrain{} training antigens. It is drawn from the
+\texttt{\IedbSourceFile{}} collection distributed alongside BP3C50ID, which
+holds \IedbSourceSequences{} IEDB sequences selected not to share more than
+20\% identity with the BP3 data, and is then restricted to sequences of
+\IedbLengthMin{}--\IedbLengthMax{} residues so that the full policy grid remains
+runnable on a workstation. Every sequence in the subset is present verbatim in
+that source collection.
+
+Its purpose is to test whether conclusions drawn from \BepipredNumAntigens{}
+antigens survive on a different and larger collection, which requires the two
+to be genuinely independent. Independence holds by construction through the
+identity filter. We also tested it directly against all
+\IedbBpThreeCompared{} BP3C50ID sequences and found \IedbIdOverlap{} shared
+identifiers, \IedbExactOverlap{} shared sequences, and a maximum
+\IedbKmerSize{}-mer containment of \IedbMaxContainment{}. That containment
+means no antigen in the subset shares even a single \IedbKmerSize{}-residue run
+with any BP3C50ID antigen.
+
+\subsection{Predictors}
+\label{sec:predictors}
+
+Two families of local and remote predictor are evaluated, and the distinction
+between them is held fixed across every policy.
+
+The \emph{heuristic family} uses handcrafted per-residue sequence-context
+features. Its local member is a lightweight residue classifier; its remote
+member is an extremely randomised trees refiner that also blends the
+local score and applies sequence smoothing, with the blend weight and smoothing
+parameters chosen on a validation split.
+
+The \emph{PLM family} replaces the features with frozen embeddings from ESM-2
+\citep{lin2023esm}, specifically the \texttt{esm2\_t6\_8M\_UR50D}
+checkpoint. The local member places a logistic residue head on those embeddings;
+the remote member adds contact-derived features and the same trees refiner.
+A region-constrained variant post-processes the remote probabilities into
+contiguous regions using contact density, with the region parameters selected on
+validation data. We use the 8M-parameter checkpoint because it is what runs on
+the hardware available for this study. It is the smallest of the released ESM-2
+models. The PLM results here should therefore be read as a lower bound on what
+the family can do, not as a characterisation of language-model-based epitope
+prediction in general.
+
+\subsection{Routing policies}
+\label{sec:policies}
+
+A routing policy decides, per antigen, whether the remote model is invoked.
+Five are compared in each family.
+
+\begin{description}
+  \item[local-only] The local model answers every antigen. No sequence is
+  transmitted.
+  \item[edge-only] Every antigen is sent to the remote model.
+  \item[adaptive-split] The local model runs first; if its mean per-residue
+  uncertainty exceeds a threshold, the antigen is re-processed remotely and the
+  remote prediction is used. The threshold and a routing budget are selected on
+  the validation split from a grid of \ThresholdGridSize{} candidate values,
+  subject to a maximum routed fraction of \RouteBudgetMax{}.
+  \item[carbon-guard] As adaptive-split, with an additional constraint that
+  suppresses routing when the modelled carbon cost of the remote call is not
+  justified by the expected quality gain.
+  \item[conformal-guard (PLM family)] As adaptive-split, with a conformal
+  criterion \citep{angelopoulos2021gentle} replacing the raw uncertainty
+  threshold.
+\end{description}
+
+Every selectable parameter in this section is chosen on a validation split
+carved out of training data at a fraction of \ValidationFraction{}, grouped by
+sequence so that no antigen contributes residues to both sides. No routing
+parameter sees the external test split.
+
+\subsection{Cost accounting}
+\label{sec:cost-accounting}
+
+Four cost quantities are recorded per antigen, and they differ in how directly
+they are observed; Table~\ref{tab:provenance} states this for each.
+
+Latency is measured, as wall-clock model-prediction time on the executing
+device. Bytes transferred are computed from the raw sequence length. Raw-sequence
+share rate is a count: the fraction of test antigens whose sequence is
+transmitted at all, which is the quantity a laboratory worried about disclosure
+would actually audit.
+
+Energy and carbon are modelled, not metered. Operational energy is the product
+of a fixed device power figure and the measured latency; operational carbon
+converts that with a grid-intensity constant of
+\SI{708}{\gram\per\kilo\watt\hour}; embodied carbon is a per-request
+amortisation of a device lifetime figure. The local device is modelled at
+\SI{34}{\watt} and the remote at \SI{145}{\watt}.
+
+The embodied term also carries a device-utilisation fraction, applied
+so that a request is charged only the share of the device's lifetime footprint
+it actually occupies: \CarbonLocalFraction{} locally and \CarbonEdgeFraction{}
+remotely. These reduce the per-request embodied charge from
+\EmbodiedDeclaredLocal{} to \EmbodiedEffectiveLocal{}~gCO\textsubscript{2}e
+locally and from \EmbodiedDeclaredEdge{} to \EmbodiedEffectiveEdge{} remotely.
+We state them explicitly because they are the single largest determinant of
+every carbon figure in this paper. As Section~\ref{sec:limitations}
+discusses, the comparison between policies is not fully insensitive to them.
+
+The balance between those two terms matters for reading the results, so we
+state it plainly. At the latencies observed here the operational term is a
+very small part of each total: a local pass contributes about
+\OperationalLocal{}~gCO\textsubscript{2}e and a remote pass about
+\OperationalEdge{}, against
+per-request totals near \LocalOnlyCarbon{} and \EdgeOnlyCarbon{}. The modelled
+carbon of a policy is therefore governed almost entirely by how many
+device-requests it charges, through the amortised embodied term, and only
+marginally by how long those requests take. Carbon differences between
+policies here are differences in request counts, not in compute. We make no
+claim about metered power anywhere in this paper.
+
+\subsection{Evaluation protocol for routing policies}
+\label{sec:eval-protocol}
+
+The full pipeline (validation split, parameter selection, training and
+external-split evaluation) is repeated for \NumSeeds{} seeds
+(\SeedFirst{}--\SeedLast{}).
+
+Repeating a pipeline over seeds on a fixed test split answers a narrow
+question: how much a number moves when the same antigens are scored again. It
+says nothing about how the number would move on different antigens, which is
+what a reader wants to know. Our primary analysis therefore resamples both.
+For each of \AntigenBootstrapRepeats{} replicates we draw \AntigenCount{}
+antigens with replacement and \NumSeeds{} seeds with replacement, recompute
+every policy's pooled residue-level metrics on that resampled set, and take
+the 2.5th and 97.5th percentiles of the resulting distribution as a 95\%
+interval. One antigen draw is shared across all policies within a replicate,
+so paired differences stay paired. Intervals are percentile intervals, with no
+bias correction or studentisation, and the resampling is driven by a fixed
+seed recorded in the released artifact.
+
+We report seed-only intervals alongside these in Section~\ref{sec:results}
+only to show how different the two are; no claim in this paper rests on them,
+and the exact sign test over seeds that an earlier version of this work relied
+on is not used.
+
+Two cautions apply to how we read these intervals. First, with
+\AntigenCount{} antigens a percentile cluster bootstrap is known to
+under-cover for non-linear statistics such as MCC and ROC-AUC, so the
+intervals should be read as indicative rather than exact. Second, several of
+the quantities we report are not random in sign. A policy that routes only
+some antigens cannot be slower than one that routes all of them, and cannot
+transmit more sequences, so for latency and disclosure the interval describes
+the magnitude of a difference whose direction is fixed by construction.
+Reporting that such an interval excludes zero would assert nothing. We say so
+where it applies, and we reserve the language of detection for the quality
+metrics, where the sign is genuinely in question. There we treat an interval
+containing zero as no detected difference, and say so rather than describing
+such a comparison as a trend.
+
+\subsection{Two protocols for selecting a fusion weight}
+\label{sec:fusion-protocol}
+
+Score fusion combines the reference predictor's per-residue score with ours
+(CARBON-BCE-R, the local-only predictor) as
+a convex blend governed by a weight \(w\). The two predictors are calibrated
+differently, so a blend of their raw outputs would be dominated by whichever
+has the wider spread. We therefore map each onto \([0,1]\) through its own
+empirical distribution function before blending. That distribution is estimated
+on the training folds and applied to the held-out fold, like any other fitted
+transform; it is not a rank transform computed over the whole split, which
+would let held-out residues influence their own normalisation. One consequence is worth
+stating, because it is easy to assume otherwise. A transform fitted on training
+data is not exactly
+rank-preserving on held-out data, so a fold's ROC-AUC after mapping can differ
+slightly from the same predictor's raw ROC-AUC. The effect is small, under
+\(10^{-3}\) per fold in our runs, but it is not zero. For this reason we report
+per-fold paired differences rather than pooled ranking metrics. A decision
+threshold then converts
+blended scores into calls. Both \(w\) and the threshold are free parameters.
+The whole question is where they come from.
+
+\paragraph{Test-derived selection.} The protocol used in the earlier version of
+this work evaluates a grid of weights on the evaluation split, reports the row
+that scores best, and sets the threshold so the blended predictor emits the same
+number of positive calls that the reference predictor emits \emph{on that same
+split}. Both quantities are thus functions of the test labels.
+
+\paragraph{Nested selection.} Antigens are the unit of resampling. For each
+held-out antigen in turn, the weight is chosen from the same grid and the
+threshold is fitted as a value on the training folds' blended scores; both are
+then applied, unchanged, to the held-out antigen. The operating point is the
+positive-call rate the reference predictor produces at its own published
+threshold, recomputed on each training split. Nothing derived from the
+held-out antigen enters the configuration applied to it: not its labels, not its
+score distribution, not its own quantiles. That is what makes the resulting
+predictor deployable, since it needs no knowledge of a new antigen before
+scoring its first residue. This yields one out-of-fold
+prediction per antigen with no test label having influenced the configuration
+applied to it. We report the mean per-antigen difference against the reference
+predictor with a 95\% bootstrap interval over antigens, a Wilcoxon signed-rank
+test and an exact sign test, and we report the weight chosen in every fold
+rather than only its median.
+
+Both protocols are implemented in the same module against the same loaders and
+metric code, so that a difference between their outputs is attributable to the
+protocol rather than to an implementation difference. Section~\ref{sec:replication}
+verifies this by reproducing the earlier figures under the test-derived
+protocol, to within \TunedBpThreeReplicationMaxDiff{}.
