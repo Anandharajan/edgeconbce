@@ -1,5 +1,5 @@
-- Routing cuts epitope screening latency to a third of remote-only execution
-- Routing keeps about 71% of antigen sequences on-device, a measurable change
-- At 15 antigens the quality effect of routing is unresolved in either direction
-- Routing raises modelled carbon: the gating model is not cheap next to what it gates
 - A reported BepiPred fusion gain does not survive nested weight selection
+- Selecting a fusion weight on the test split inflates MCC by about 0.04
+- The inflation exceeds the gain that protocol reported, leaving it uninformative
+- 3 of 12 published combined epitope predictors tune on their own test data
+- A gate earns its carbon only above 13x the cost of what it gates

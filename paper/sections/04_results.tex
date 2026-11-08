@@ -130,8 +130,9 @@ to --- the embodied amortisation constant --- is not among the available axes
 outputs of the energy model described in Section~\ref{sec:cost-accounting},
 computed from fixed device power, an amortised embodied term and measured
 latency; they are not metered measurements. Uncertainty-triggered routing is
-the most carbon-intensive policy because a routed antigen is charged two
-device-requests.}
+the most carbon-intensive policy here because a routed antigen is charged two
+device-requests; the ordering is specific to this checkpoint pair and reverses
+for a larger remote tier, as the text below sets out.}
 \label{fig:carbon}
 \end{figure*}
 
@@ -178,6 +179,38 @@ sequences makes the gating pass a large fraction of the work it gates. The
 same inversion has been reported for draft-and-verify decoding cascades
 \citep{dutta2026speculative}. What the measurements contribute is the location
 of the threshold for this task, not the existence of one.
+
+That location, however, is a property of the checkpoint pair rather than of
+the task, and it does not survive a larger remote tier. In the recorded cost
+model the embodied charge dominates: operational cost is
+\ScaleOperationalShareEdge{}\% of the remote total, and the embodied term is
+levied per request and does not grow with model size. Scaling the remote model
+therefore grows a term that starts small, and
+Equation~\ref{eq:carbon-threshold} moves only once it becomes comparable to
+the embodied charge. Taking operational cost to scale with parameter count at
+fixed sequence length (Figure~\ref{fig:selection-bias}, right), the break-even
+fraction rises from
+\ScaleBreakEvenMeasured{} at the \(8\)M remote tier measured here to
+\ScaleSmallBreakEven{} at \(35\)M, \ScaleMidBreakEven{} at \(150\)M and
+\ScaleLargeBreakEven{} at \(650\)M. Solving for the crossing exactly, the
+ordering reverses once the remote call costs
+\ScaleCrossoverFactor{}\(\times\) the one measured here, which is a remote
+model of roughly \ScaleCrossoverParams{}M parameters at this local scale.
+
+This matters for the claim rather than for the arithmetic. BepiPred-3.0, the
+reference predictor a laboratory would actually call remotely, is built on
+ESM-2 650M --- five times past that crossing. Against a remote tier of that
+size the policy's routed fraction of \AdaptiveSplitRouteRate{} sits well below
+the break-even, and routing becomes the \emph{less} carbon-intensive choice,
+not the more. We therefore state the carbon result conditionally: routing is
+the most carbon-intensive policy of those compared \emph{for the checkpoint
+pair measured here}, and the finding that transfers is
+Equation~\ref{eq:carbon-threshold} together with the observation that a
+gate is only worth its carbon when what it gates is substantially more
+expensive than the gate. Our own pairing, an \(8\)M local model against an
+\(8\)M remote one, is close to the worst case for that condition. The
+sensitivity is modelled on the recorded constants, not metered, like the
+carbon figures it extends.
 
 The carbon-guard policy, which exists precisely to suppress unprofitable
 routing, does reduce carbon to \CarbonGuardCarbon{} --- essentially
@@ -302,6 +335,109 @@ Figure~\ref{fig:per-sequence} shows the per-antigen differences behind these
 means. The dispersion is far larger than the mean in both directions. That is
 what a null effect over a small number of antigens looks like, and it is the
 reason we report the paired tests rather than a pooled number alone.
+
+\subsection{How often the published literature selects this way}
+\label{sec:survey}
+
+The result above is a correction to our own unpublished analysis, which bounds
+how much it matters. To ask whether the practice is confined to us, we
+surveyed published B-cell epitope predictors that combine two or more models
+--- score fusion, ensembles, stacking, consensus voting --- and asked of each
+whether the combination parameter was chosen using the same data the headline
+performance is reported on. The survey covers
+\SurveyAssessed{} assessable papers and records, for every one, the verbatim
+sentence the judgement rests on; it is released with the code.
+
+We keep three categories apart. \SurveyLeakage{} papers are \emph{leakage
+evident}: the text states that a mixing weight, a voting rule, an ensemble
+composition or a reported configuration was chosen by inspecting performance
+on the evaluation data. \SurveyClean{} are \emph{leakage-free evident}: a
+validation split, the training set, or a rule fixed a priori.
+\SurveyUnreported{} are \emph{unreported}: the paper does not say on which
+data the parameter was chosen. We do not count the third group as leakage. It
+is an observation about what the methods section contains, and its size is
+itself the point --- a quarter of the sample does not let a reader check.
+Among the \SurveyStatingBasis{} papers that do state a basis,
+\SurveyLeakageShare{}\% selected on their own evaluation data.
+
+These counts are not a prevalence estimate and we do not offer them as one.
+The sample is open-access only, reachable by keyword, and skewed towards
+recent and prominent work; paywalled methods papers are structurally absent.
+With \SurveyAssessed{} papers each count carries a sampling error of one or
+two. What the survey does establish is that the selection step we found in our
+own work is present in the published literature, that it is not rare among
+papers that disclose enough to tell, and that a substantial minority of papers
+disclose too little for the question to be asked at all. The magnitude such a
+step can reach is the subject of the next section.
+
+\subsection{How large the selection step is, and what governs it}
+\label{sec:bias-curve}
+
+The sections above establish that the selection step moved our estimate and
+that the practice occurs in print. Neither says how large an effect a reader
+should expect it to produce. That is answerable from the same data by
+resampling.
+
+For a given antigen count and weight grid we draw a subset without
+replacement, estimate the fused-minus-reference difference on it twice, and
+record the gap. The first estimate scans the grid on the subset and keeps the
+best row, which is the protocol a paper follows when it reports a tuned
+combination parameter without holding anything out. The second applies
+leave-one-sequence-out selection inside the same subset. Both estimators see
+exactly the same antigens, so the gap is attributable to the selection rule
+rather than to which data were drawn. We average over \BiasReplicates{} draws
+per cell.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_selection_bias.pdf}
+\caption{Left: the mean gap between a weight chosen on the evaluation split
+and one chosen by leave-one-sequence-out selection within it, over
+\BiasReplicates{} draws per cell, by antigen count and weight-grid density.
+Both estimators see the same antigens in every draw. The rightmost point of
+each series is the full split, where only one subset exists; it is a single
+deterministic run rather than a mean, which is why the coarsest grid reaches
+exactly zero there, and it should not be read as part of the trend. Right:
+the break-even routed fraction of
+Equation~\ref{eq:carbon-threshold} as the remote tier is scaled, with the
+policy's own routed fraction marked. The released ESM-2 checkpoints are
+labelled; the ordering reverses between \(35\)M and \(150\)M. Both panels
+are modelled from the recorded constants, not metered.}
+\label{fig:selection-bias}
+\end{figure*}
+
+The bias is positive everywhere and large relative to the effects this
+literature reports (Figure~\ref{fig:selection-bias}, left). On \BiasMetric{}
+it runs from \BiasAtSmallestN{} at
+\BiasSmallestN{} antigens to \BiasAtLargestN{} at \BiasLargestN{}. It grows
+with the density of the grid: at \BiasGridRefN{} antigens a
+\BiasCoarseGridPoints{}-point grid yields \BiasCoarseGridBias{} and a
+\BiasFineGridPoints{}-point grid \BiasFineGridBias{}, which is what one would
+expect if a finer scan simply offers more chances to fit the evaluation split.
+At the grid densities ordinarily used --- weight steps of \(0.05\) are
+common --- the test-derived estimate was the more favourable one in
+\BiasPositiveShareLargestN{}\% of draws. The full-split cell reproduces the
+headline of Section~\ref{sec:fusion-results} exactly, at
+\BiasAtLargestN{}, which is the difference between the
+\TunedBpThreeDeltaMcc{} that protocol reports and the
+\NestedBpThreeDeltaMcc{} nested selection returns.
+
+The comparison worth drawing is between that bias and the effects it is used
+to support. Our own earlier analysis reported a gain of
+\TunedBpThreeDeltaMcc{} \BiasMetric{}. The expected bias at that sample size
+and grid density is several times larger. A tuned fusion result of that
+magnitude, on a benchmark of this size, therefore carries no information about
+whether fusion helps: it is within what the selection rule alone produces.
+This is the sense in which the present work generalises beyond one corrected
+analysis. The bias is not an accident of our predictors; it is a property of
+scanning a grid on a small evaluation set, and its size can be estimated in
+advance for any such design.
+
+We are careful about the scope. These magnitudes are specific to these two
+predictors, whose mean rank agreement across cells is \BiasAgreement{}; two
+predictors that agree less would leave more room for a scan to exploit, and
+two that agree more would leave less. What transfers is the construction and
+the direction, not the numbers.
 
 \subsection{Which predictor the procedure prefers}
 \label{sec:weight-transfer}

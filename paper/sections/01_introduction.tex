@@ -34,10 +34,12 @@ quality against always-remote execution while cutting latency to roughly a
 third and keeping most raw sequences on the device. It also gives an answer
 nobody in this project expected. A routed antigen is charged twice: once for
 the local pass that decides it is hard, once for the remote pass that then
-processes it. Routing is therefore the most carbon-intensive policy in the
-comparison. The green framing that usually accompanies edge inference does not
-survive contact with the accounting, and Section~\ref{sec:routing-results}
-gives the condition under which it would.
+processes it. For the checkpoint pair measured here, routing is therefore the
+most carbon-intensive policy in the comparison. The green framing that usually
+accompanies edge inference does not survive contact with the accounting. The
+condition under which it would is a ratio rather than a verdict, and
+Section~\ref{sec:routing-results} shows that a remote tier the size of the one
+a laboratory would really call sits on the other side of it.
 
 The paper also re-examines an earlier unpublished analysis of our own, which
 reported that blending the scores of our local predictor with those of
@@ -74,16 +76,24 @@ sequences and needs no new data.
   \item A \NumSeeds{}-seed characterisation of five local--edge routing
   policies on BP3C50ID, with bootstrap intervals and paired sign tests. It
   includes a closed-form condition locating where the known offloading energy
-  threshold \citep{kumar2010cloud} falls for this task: routing increases
-  modelled carbon once the routed fraction exceeds \CarbonBreakEvenRate{}, and
-  a quality-tuned policy routes about twice that often
-  (Section~\ref{sec:routing-results}).
+  threshold \citep{kumar2010cloud} falls for this task, and how that location
+  moves with the size of the remote tier: routing increases modelled carbon
+  once the routed fraction exceeds \CarbonBreakEvenRate{} for the checkpoint
+  pair measured here, but the ordering reverses above a remote cost of
+  \ScaleCrossoverFactor{}\(\times\) the one measured, which the reference
+  predictor's own backbone exceeds (Section~\ref{sec:routing-results}).
   \item An instance, in conformational epitope prediction, of the
   selection-bias mechanism documented in bioinformatics since
   \citet{varma2006bias}: we reproduce a previously reported fusion advantage
   under its original, test-derived protocol, then re-estimate it leakage-free
   on two datasets, where it is no longer detectable and the estimate changes
   sign (Section~\ref{sec:fusion-results}).
+  \item A survey of \SurveyAssessed{} published B-cell epitope predictors that
+  combine two or more models, asking of each whether the combination parameter
+  was selected on the data the headline result is reported on.
+  \SurveyLeakage{} state that it was, \SurveyClean{} state a separate basis,
+  and \SurveyUnreported{} do not say. Each judgement is recorded with the
+  verbatim sentence it rests on (Section~\ref{sec:survey}).
   \item The observation that, given a free choice on either dataset, the
   selection procedure assigns our predictor almost no weight. We report the
   per-fold selections rather than summarising them away

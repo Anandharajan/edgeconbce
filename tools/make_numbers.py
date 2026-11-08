@@ -407,14 +407,23 @@ def add_selection_bias_curve(m: MacroSet, path: Path) -> None:
         m.add("BiasWorstN", str(worst["antigens"]))
         m.add("BiasWorstValue", fmt(worst["mean_bias"], 4))
 
-    # Grid density at the full split: how much a denser scan buys the optimist.
-    full = max(r["antigens"] for r in rows)
-    at_full = sorted((r for r in rows if r["antigens"] == full), key=lambda r: r["grid_points"])
-    if len(at_full) >= 2:
-        m.add("BiasCoarseGridPoints", str(at_full[0]["grid_points"]))
-        m.add("BiasCoarseGridBias", fmt(at_full[0]["mean_bias"], 4))
-        m.add("BiasFineGridPoints", str(at_full[-1]["grid_points"]))
-        m.add("BiasFineGridBias", fmt(at_full[-1]["mean_bias"], 4))
+    # Grid density: how much a denser scan buys the optimist. Read this at the
+    # largest antigen count that was actually resampled. At the full split
+    # there is only one possible subset, so that cell is a single deterministic
+    # run rather than a mean, and quoting it as an estimate would be wrong.
+    replicated = [r for r in rows if r["replicates_used"] > 1]
+    if replicated:
+        ref_n = max(r["antigens"] for r in replicated)
+        at_ref = sorted(
+            (r for r in replicated if r["antigens"] == ref_n),
+            key=lambda r: r["grid_points"],
+        )
+        if len(at_ref) >= 2:
+            m.add("BiasGridRefN", str(ref_n))
+            m.add("BiasCoarseGridPoints", str(at_ref[0]["grid_points"]))
+            m.add("BiasCoarseGridBias", fmt(at_ref[0]["mean_bias"], 4))
+            m.add("BiasFineGridPoints", str(at_ref[-1]["grid_points"]))
+            m.add("BiasFineGridBias", fmt(at_ref[-1]["mean_bias"], 4))
     m.add("BiasAgreement", fmt(
         sum(r["mean_predictor_agreement"] for r in rows) / len(rows), 3))
 

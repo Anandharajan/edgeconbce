@@ -26,15 +26,26 @@ Equation~\ref{eq:carbon-threshold} says precisely when it would. Offloading
 saves energy only above a ratio of work offloaded to overhead incurred
 \citep{kumar2010cloud}. Our contribution is to locate that boundary for this
 task, at a routed fraction of \CarbonBreakEvenRate{}, and to observe that a
-policy tuned for predictive quality routes about twice as often as that. The
-green argument
-would recover for longer antigens or a heavier remote tier, where the ratio
-shifts. Practitioners can evaluate Equation~\ref{eq:carbon-threshold} for their
-own pair rather than assuming either direction.
+policy tuned for predictive quality routes about twice as often as that.
 
-The practical recommendation, then, is to adopt routing when sequence disclosure
-or turnaround is the binding constraint, and not to adopt it on environmental
-grounds without measuring the ratio for the models actually in use.
+We initially read that as a negative result about routing. It is better read
+as a statement about the pair being routed between. The boundary is not fixed:
+it climbs with the cost of a remote call, and crosses the policy's routed
+fraction once that call costs \ScaleCrossoverFactor{} times the one we
+measured. Our local and remote tiers were both small, which is close to the
+worst case for a gate --- the gating pass is a large fraction of the work it
+gates. A laboratory routing to BepiPred-3.0, built on ESM-2 650M, is five
+times past the crossing, and for that deployment the green argument recovers.
+The honest summary is therefore not that routing costs carbon but that a gate
+earns its carbon only when what it gates is substantially more expensive than
+the gate, and that we measured a configuration where it is not.
+
+The practical recommendation follows from the ratio rather than from our sign.
+Adopt routing when sequence disclosure or turnaround is the binding
+constraint. On environmental grounds, evaluate
+Equation~\ref{eq:carbon-threshold} for the models actually in use: with a
+small local screen in front of a large remote predictor it will usually
+favour routing, and with two models of similar size it will not.
 
 \subsection{What the fusion result means, and what it does not}
 

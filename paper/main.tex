@@ -46,48 +46,48 @@ prediction: what survives leakage-free selection}
 
 \begin{abstract}
 \noindent
-Screening antigens for conformational B-cell epitopes increasingly relies on
-protein language models. Those models are too heavy for the laboratory
-workstations where candidate antigens are first triaged, which pushes
-laboratories towards sending raw sequences to a remote service. We study the
-intermediate option. Each antigen is routed
-to local or remote execution according to the local model's own uncertainty.
-On the same runs we measure predictive quality, latency,
-modelled carbon and the fraction of antigens whose raw sequence leaves the
-device, resampling over antigens rather than over re-runs. On the BP3C50ID
-external split, routing runs at \(\AAdaptiveSplitLatency{}\,\)ms per antigen
-against \(\AEdgeOnlyLatency{}\,\)ms for always-remote execution, a difference of
-\(\ADAsVsEoLatency{}\,\)ms (95\% CI
-[\ADAsVsEoLatencyLo{}, \ADAsVsEoLatencyHi{}]). It transmits the raw sequence of
-\AAdaptiveSplitRawShare{} of antigens, where always-remote execution transmits
-all of them. Its effect on predictive quality is not resolved at this sample
-size. Against always-remote execution all four quality metrics have intervals
-containing zero, and against always-local execution only F1 separates them
-(\(\Delta\)F1 \ADAsVsLoFOne{} [\ADAsVsLoFOneLo{}, \ADAsVsLoFOneHi{}]). The same
-comparisons appear decisive under the seed-only intervals that repeated
-benchmarking conventionally reports, which on a fixed \AntigenCount{}-antigen
-split measure re-run dispersion rather than sampling uncertainty. The cost
-accounting runs the other way: in our model routing is the most carbon-intensive
-policy, for any positive cost constants, though the routed fraction at which
-that begins depends on constants we assume rather than measure. We give in closed form the routed
-fraction above which this must occur, \CarbonBreakEvenRate{} here. We then
-re-examine an earlier unpublished result of our own, that fusing our local
-predictor with BepiPred-3.0 improves on BepiPred-3.0 alone. Reproducing the
-original protocol to within \TunedBpThreeReplicationMaxDiff{} across all
-\TunedBpThreeReplicationRows{} of its stored grid entries, we show that the
-mixing weight and decision threshold were selected on the evaluation split.
-Under leave-one-sequence-out nested selection the advantage is no longer
-detectable on BP3C50ID (\(\Delta\)ROC-AUC \NestedBpThreeDeltaAuc{}
-[\NestedBpThreeDeltaAucLo{}, \NestedBpThreeDeltaAucHi{}]), and the MCC
-estimate changes sign, from \TunedBpThreeDeltaMcc{} to
-\NestedBpThreeDeltaMcc{}. A second arm on a \NestedIedbSequences{}-antigen
-IEDB subset behaves the same way (\NestedIedbDeltaAuc{}
-[\NestedIedbDeltaAucLo{}, \NestedIedbDeltaAucHi{}]), though it fuses against
-our own local predictor rather than BepiPred-3.0 and so tests a different
-pair. In both arms the folds place almost all weight on the reference
-predictor. These sample sizes cannot establish that fusion does not help; what
-they do show is how far the selection step moves the estimate. On benchmarks
-of this size, the conventional analyses report more confidence than the data
+Combined predictors are common in B-cell epitope prediction: a mixing weight,
+an ensemble coefficient or a voting rule is tuned, and the combined score is
+reported as an improvement. When that parameter is chosen on the data the
+improvement is reported on, the improvement is partly the choosing. We
+quantify how much.
+
+We begin with a case we can audit completely. An earlier unpublished analysis
+of our own reported that fusing a local predictor with BepiPred-3.0 improves
+on BepiPred-3.0 alone. Reproducing that protocol to within
+\TunedBpThreeReplicationMaxDiff{} across all \TunedBpThreeReplicationRows{} of
+its stored grid entries, we show the mixing weight and decision threshold were
+selected on the evaluation split. Under leave-one-sequence-out nested
+selection the advantage is no longer detectable (\(\Delta\)ROC-AUC
+\NestedBpThreeDeltaAuc{} [\NestedBpThreeDeltaAucLo{},
+\NestedBpThreeDeltaAucHi{}]) and the MCC estimate changes sign, from
+\TunedBpThreeDeltaMcc{} to \NestedBpThreeDeltaMcc{}.
+
+Resampling the same data turns that single instance into a quantity. Drawing
+antigen subsets and estimating the fused-minus-reference difference twice on
+each --- once by scanning the grid on the subset, once by nested selection
+within it --- the selection step alone contributes \BiasAtSmallestN{} MCC at
+\BiasSmallestN{} antigens and \BiasAtLargestN{} at \BiasLargestN{}, rising
+with grid density and positive in \BiasPositiveShareLargestN{}\% of draws. The
+inflation exceeds the \TunedBpThreeDeltaMcc{} the tuned protocol reported, so
+a gain of that size on a split of this size is uninformative. Surveying
+\SurveyAssessed{} published combined epitope predictors, \SurveyLeakage{}
+state that the combination parameter was chosen on the evaluation data,
+\SurveyClean{} state a separate basis, and \SurveyUnreported{} do not say.
+
+The same harness measures what deploying such a predictor costs. Routing
+antigens between a local and a remote model on the local model's uncertainty
+runs at \(\AAdaptiveSplitLatency{}\,\)ms against
+\(\AEdgeOnlyLatency{}\,\)ms for always-remote execution
+([\ADAsVsEoLatencyLo{}, \ADAsVsEoLatencyHi{}]) and transmits
+\AAdaptiveSplitRawShare{} of raw sequences. Its quality effect is not resolved
+at \AntigenCount{} antigens. Modelled carbon favours routing only above a
+ratio: routing is the most carbon-intensive policy for the pair measured here,
+but the break-even rises with remote model size and the ordering reverses
+above \ScaleCrossoverFactor{}\(\times\) the measured remote cost, which
+BepiPred-3.0's own backbone exceeds. Throughout, intervals taken over antigens
+rather than over re-runs are an order of magnitude wider: on benchmarks of
+this size the conventional analyses report more confidence than the data
 supports.
 \end{abstract}
 
