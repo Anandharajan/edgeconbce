@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +38,8 @@ def threshold_preserving_count(scores: np.ndarray, positive_count: int) -> float
 
 
 def published_protocol(inputs, *, select_metric: str = "mcc",
-                       reference_threshold: float | None = None) -> dict[str, Any]:
+                       reference_threshold: float | None = None,
+                       weight_grid: Sequence[float] = DEFAULT_WEIGHT_GRID) -> dict[str, Any]:
     """Blend raw scores, scan the weight grid on the evaluation split, keep the best.
 
     The published threshold rule gives the blended predictor the same number of
@@ -52,7 +54,7 @@ def published_protocol(inputs, *, select_metric: str = "mcc",
     reference_metrics = score_metrics(y, ref, reference_threshold)
 
     grid: list[dict[str, Any]] = []
-    for weight in DEFAULT_WEIGHT_GRID:
+    for weight in weight_grid:
         blended = weight * ref + (1.0 - weight) * cand
         metrics = score_metrics(y, blended, threshold_preserving_count(blended, reference_positive_count))
         grid.append({"weight": float(weight), **metrics})

@@ -1,0 +1,32 @@
+mode: legacy_bp3_real_v3
+output_json_path: outputs/iedb_reduced_smoke/iedb_reduced_smoke_results.json
+seed: 42
+train_fasta_path: data/external/iedb_reduced_smoke/IEDB_reduced_smoke_train.fasta
+test_fasta_path: data/external/iedb_reduced_smoke/IEDB_reduced_smoke_test.fasta
+validation_fraction: 0.25
+route_budget_max: 0.5
+threshold_grid:
+  start: 0.05
+  stop: 0.95
+  count: 19
+route_probability_grid:
+  start: 0.3
+  stop: 0.95
+  count: 14
+edge_blend_weight_grid:
+  - 1.0
+smoothing_radius_grid:
+  - 0
+smoothing_alpha_grid:
+  - 0.0
+local_device:
+  name: lab_gateway_cpu
+  operational_power_w: 34.0
+  embodied_kgco2e_total: 180.0
+  amortization_requests: 300000
+edge_device:
+  name: regional_edge_cpu_cluster
+  operational_power_w: 145.0
+  embodied_kgco2e_total: 850.0
+  amortization_requests: 4000000
+grid_intensity_gco2_per_kwh: 708.0

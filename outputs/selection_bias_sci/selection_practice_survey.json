@@ -1,0 +1,77 @@
+{
+  "project": "EdgeConBCE",
+  "analysis": "selection_practice_survey",
+  "question": "Among published B-cell epitope predictors that combine two or more models, how often is the combination parameter selected on the same data the headline result is reported on?",
+  "source": "data/selection_practice_survey.md",
+  "assessed_papers": 12,
+  "counts": {
+    "leakage evident": 3,
+    "leakage-free evident": 6,
+    "unreported / cannot tell": 3
+  },
+  "papers_stating_a_basis": 9,
+  "leakage_share_of_those_stating_a_basis": 0.3333333333333333,
+  "caveat": "Open-access, keyword-reachable sample of 12 papers. Not a prevalence estimate for the subfield: paywalled methods papers are structurally absent, the queries are keyword-dependent, and the sample skews recent and prominent. Papers that do not state a basis are reported separately and are never counted as leakage.",
+  "rows": [
+    {
+      "row": "1",
+      "citation": "Manavalan B, Govindaraj RG, Shin TH, Kim MO, Lee G. **iBCE-EL**. *Front Immunol* 9:1695 (2018). doi:10.3389/fimmu.2018.01695 (PMC6072840)",
+      "classification": "leakage evident"
+    },
+    {
+      "row": "2",
+      "citation": "Hasan MM, Khatun MS, Kurata H. **iLBE**. *Genomics Proteomics Bioinformatics* 18(5):593\u2013600 (2020). doi:10.1016/j.gpb.2019.04.004 (PMC8377379)",
+      "classification": "unreported / cannot tell"
+    },
+    {
+      "row": "3",
+      "citation": "Liu T, Shi K, Li W. **DLBEpitope**: Deep learning methods improve linear B-cell epitope prediction. *BioData Mining* 13:1 (2020). doi:10.1186/s13040-020-00211-0 (PMC7371472)",
+      "classification": "leakage-free evident"
+    },
+    {
+      "row": "4",
+      "citation": "Galanis KA, Nastou KC, Papandreou NC, Petichakis GN, Pigis DG, Iconomidou VA. **Linear B-cell epitope prediction \u2026 performance review of methods available via command-line interface**. *Int J Mol Sci* 22(6):3210 (2021). doi:10.3390/ijms22063210 (PMC8004178)",
+      "classification": "leakage evident"
+    },
+    {
+      "row": "5",
+      "citation": "La Marca AF, Lopes RDS, Lotufo ADP, Bartholomeu DC, Minussi CR. **BepFAMN**: A method for linear B-cell epitope predictions based on Fuzzy-ARTMAP artificial neural network. *Sensors* 22:4027 (2022). doi:10.3390/s22114027 (PMC9185646)",
+      "classification": "leakage-free evident"
+    },
+    {
+      "row": "6",
+      "citation": "Ozger ZB, Cihan P. **A novel ensemble fuzzy classification model in SARS-CoV-2 B-cell epitope identification for development of protein-based vaccine**. *Appl Soft Comput* (2022):108280. doi:10.1016/j.asoc.2021.108280 (PMC8673934)",
+      "classification": "leakage-free evident"
+    },
+    {
+      "row": "7",
+      "citation": "Shashkova TI, Umerenkov D, Salnikov M, Strashnov PV, Konstantinova AV, Lebed I, Shcherbinin DN, et al. **SEMA**: Antigen B-cell conformational epitope prediction using deep transfer learning. *Front Immunol* 13:960985 (2022). doi:10.3389/fimmu.2022.960985 (PMC9523212)",
+      "classification": "unreported / cannot tell"
+    },
+    {
+      "row": "8",
+      "citation": "Clifford JN, H\u00f8ie MH, Deleuran S, Peters B, Nielsen M, Marcatili P. **BepiPred-3.0**. *Protein Science* 31(12):e4497 (2022). doi:10.1002/pro.4497 (PMC9679979)",
+      "classification": "leakage-free evident"
+    },
+    {
+      "row": "9",
+      "citation": "Israeli S, Louzoun Y. **CALIBER**: Single-residue linear and conformational B cell epitopes prediction using random and ESM-2 based projections. *Brief Bioinform* 25:bbae084 (2024). doi:10.1093/bib/bbae084 (PMC10940830)",
+      "classification": "unreported / cannot tell"
+    },
+    {
+      "row": "10",
+      "citation": "Li J, Zhao Z, Tai C, Sun T, Tan L, Li X, He W, Li H, Zhang J. **VirusImmu**: a novel ensemble machine learning approach for viral immunogenicity prediction. *Brief Funct Genomics* (2025):elaf008. doi:10.1093/bfgp/elaf008 (PMC12051847)",
+      "classification": "leakage-free evident"
+    },
+    {
+      "row": "11",
+      "citation": "Gurcan F. **Linear B-cell epitope prediction for SARS and COVID-19 vaccine design: integrating balanced ensemble learning models and resampling strategies**. *PeerJ Comput Sci* (2025):e2970. doi:10.7717/peerj-cs.2970 (PMC12193457)",
+      "classification": "leakage evident"
+    },
+    {
+      "row": "12",
+      "citation": "Wang S, Geng A, Luo Z, Li Y, Xu J, Meng Y, Wei L, Zou Q, Zhang Z, Wang T, Cui F. **MsgaBpred**: a B-cell epitope predictor integrating AlphaFold3-predicted structures with multi-scale GCNs and protein language models. *PLoS Comput Biol* (2026):e1014195. doi:10.1371/journal.pcbi.1014195 (PMC13123994)",
+      "classification": "leakage-free evident"
+    }
+  ]
+}

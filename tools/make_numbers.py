@@ -339,6 +339,86 @@ def add_iedb_real(m: MacroSet, path: Path) -> None:
         pass
 
 
+
+def add_carbon_scale_sensitivity(m: MacroSet, path: Path) -> None:
+    """Break-even routed fraction as the remote tier is scaled up."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    rec = d["recorded"]
+    m.add("ScaleOperationalShareEdge", fmt(rec["operational_share_of_edge_total"] * 100, 1))
+    m.add("ScaleBreakEvenMeasured", fmt(rec["break_even_at_measured_scale"], 3))
+    by_name = {c["remote_checkpoint"]: c for c in d["checkpoints"]}
+    for key, name in (
+        ("ScaleSmall", "esm2_t12_35M_UR50D"),
+        ("ScaleMid", "esm2_t30_150M_UR50D"),
+        ("ScaleLarge", "esm2_t33_650M_UR50D"),
+    ):
+        row = by_name.get(name)
+        if row is None:
+            continue
+        m.add(f"{key}BreakEven", fmt(row["break_even_route_rate"], 3))
+        m.add(f"{key}Factor", str(int(round(row["operational_scale_factor"]))))
+        m.add(f"{key}EdgeCost", fmt(row["c_edge_gco2e"], 4))
+    first = d.get("first_checkpoint_without_penalty")
+    if first:
+        m.add("ScaleFirstCleanCheckpoint", first["remote_checkpoint"].replace("_", r"\_"))
+        m.add("ScaleFirstCleanBreakEven", fmt(first["break_even_route_rate"], 3))
+    m.add("ScaleVerdictInverts", "yes" if first else "no")
+    exact = d.get("exact_crossover")
+    if exact:
+        m.add("ScaleCrossoverFactor", fmt(exact["operational_scale_factor"], 1))
+        m.add(
+            "ScaleCrossoverParams",
+            str(int(round(exact["implied_remote_parameters"] / 1e6))),
+        )
+
+
+def add_selection_practice_survey(m: MacroSet, path: Path) -> None:
+    """How often published combined predictors tune on their own test data."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    counts = d["counts"]
+    m.add("SurveyAssessed", str(d["assessed_papers"]))
+    m.add("SurveyLeakage", str(counts["leakage evident"]))
+    m.add("SurveyClean", str(counts["leakage-free evident"]))
+    m.add("SurveyUnreported", str(counts["unreported / cannot tell"]))
+    m.add("SurveyStatingBasis", str(d["papers_stating_a_basis"]))
+    share = d.get("leakage_share_of_those_stating_a_basis")
+    if share is not None:
+        m.add("SurveyLeakageShare", fmt(share * 100, 0))
+
+
+def add_selection_bias_curve(m: MacroSet, path: Path) -> None:
+    """How selection bias scales with antigen count and weight-grid density."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    rows = d["rows"]
+    m.add("BiasReplicates", str(max(r["replicates_requested"] for r in rows)))
+    m.add("BiasMetric", d["select_metric"].upper().replace("_", r"\_"))
+
+    default_grid = 21
+    at_default = [r for r in rows if r["grid_points"] == default_grid]
+    if at_default:
+        by_size = {r["antigens"]: r for r in at_default}
+        smallest, largest = min(by_size), max(by_size)
+        m.add("BiasSmallestN", str(smallest))
+        m.add("BiasLargestN", str(largest))
+        m.add("BiasAtSmallestN", fmt(by_size[smallest]["mean_bias"], 4))
+        m.add("BiasAtLargestN", fmt(by_size[largest]["mean_bias"], 4))
+        m.add("BiasPositiveShareLargestN", fmt(by_size[largest]["share_bias_positive"] * 100, 0))
+        worst = max(at_default, key=lambda r: r["mean_bias"])
+        m.add("BiasWorstN", str(worst["antigens"]))
+        m.add("BiasWorstValue", fmt(worst["mean_bias"], 4))
+
+    # Grid density at the full split: how much a denser scan buys the optimist.
+    full = max(r["antigens"] for r in rows)
+    at_full = sorted((r for r in rows if r["antigens"] == full), key=lambda r: r["grid_points"])
+    if len(at_full) >= 2:
+        m.add("BiasCoarseGridPoints", str(at_full[0]["grid_points"]))
+        m.add("BiasCoarseGridBias", fmt(at_full[0]["mean_bias"], 4))
+        m.add("BiasFineGridPoints", str(at_full[-1]["grid_points"]))
+        m.add("BiasFineGridBias", fmt(at_full[-1]["mean_bias"], 4))
+    m.add("BiasAgreement", fmt(
+        sum(r["mean_predictor_agreement"] for r in rows) / len(rows), 3))
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--repeated-eval", required=True)
@@ -349,6 +429,9 @@ def main() -> int:
     p.add_argument("--provenance-audit")
     p.add_argument("--policy-resampling")
     p.add_argument("--carbon-decomposition")
+    p.add_argument("--carbon-scale-sensitivity")
+    p.add_argument("--selection-survey")
+    p.add_argument("--selection-bias-curve")
     p.add_argument("--transport")
     p.add_argument("--two-node-transport")
     p.add_argument("--iedb-real-results")
@@ -367,6 +450,12 @@ def main() -> int:
         add_policy_resampling(m, Path(a.policy_resampling))
     if a.carbon_decomposition:
         add_carbon_decomposition(m, Path(a.carbon_decomposition))
+    if a.carbon_scale_sensitivity:
+        add_carbon_scale_sensitivity(m, Path(a.carbon_scale_sensitivity))
+    if a.selection_survey:
+        add_selection_practice_survey(m, Path(a.selection_survey))
+    if a.selection_bias_curve:
+        add_selection_bias_curve(m, Path(a.selection_bias_curve))
     if a.transport:
         add_transport(m, Path(a.transport), "Transport")
     if a.two_node_transport:

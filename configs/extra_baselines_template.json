@@ -1,0 +1,32 @@
+{
+  "rows": [
+    {
+      "model": "BepiPred-3.0 official local rerun",
+      "source_type": "local_rerun",
+      "dataset": "BP3C50ID external test (15 antigens)",
+      "roc_auc": null,
+      "mcc": null,
+      "f1": null,
+      "average_precision": null,
+      "latency_ms": null,
+      "total_gco2e": null,
+      "raw_sequence_share_rate": null,
+      "notes": "Fill with official executable or service outputs on the same BP3C50ID split.",
+      "source_url": "https://services.healthtech.dtu.dk/services/BepiPred-3.0/"
+    },
+    {
+      "model": "Second modern BCE baseline",
+      "source_type": "local_rerun",
+      "dataset": "BP3C50ID external test (15 antigens)",
+      "roc_auc": null,
+      "mcc": null,
+      "f1": null,
+      "average_precision": null,
+      "latency_ms": null,
+      "total_gco2e": null,
+      "raw_sequence_share_rate": null,
+      "notes": "Use source_type=published_different_split only when the comparator is not rerun on BP3C50ID; keep such rows out of headline same-split claims.",
+      "source_url": null
+    }
+  ]
+}

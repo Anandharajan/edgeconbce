@@ -1,0 +1,33 @@
+mode: notebook_compat
+artifact_version: 1
+output_json_path: outputs/edgeconbce_notebook_results.json
+seed: 42
+num_samples: 60
+min_sequence_length: 70
+max_sequence_length: 360
+decision_threshold: 0.5
+grid_intensity_gco2_per_kwh: 708.0
+privacy_mode: true
+policies:
+  - local_only
+  - edge_only
+  - carbon_first
+  - adaptive_split
+local_device:
+  name: lab_gateway_cpu
+  operational_power_w: 34.0
+  embodied_kgco2e_total: 180.0
+  amortization_requests: 300000
+edge_device:
+  name: regional_edge_gpu
+  operational_power_w: 145.0
+  embodied_kgco2e_total: 850.0
+  amortization_requests: 4000000
+weights:
+  uncertainty: 0.3
+  sequence_length: 0.1
+  contact_complexity: 0.24
+  quality_risk: 0.18
+  operational_carbon: 0.08
+  local_confidence: 0.1
+

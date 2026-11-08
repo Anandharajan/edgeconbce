@@ -1,0 +1,13 @@
+numpy
+PyYAML
+scikit-learn
+
+[dev]
+black
+mypy
+pytest
+ruff
+
+[gpu]
+fair-esm
+torch

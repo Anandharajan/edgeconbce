@@ -19,6 +19,7 @@ CARBON_BP3="$OUT/carbon_bce_r_colab_bp3/carbon_bce_r_test_predictions.json"
 CARBON_IEDB="$OUT/carbon_bce_r_iedb_bounded_gpu/carbon_bce_r_test_predictions.json"
 IEDB_REAL="$OUT/iedb_reduced_subset_bounded/iedb_reduced_subset_bounded_results.json"
 NESTED="$OUT/nested_fusion_sci"
+BIAS="$OUT/selection_bias_sci"
 
 for f in "$REPEATED" "$BEPIPRED_SUMMARY" "$BEPIPRED_RAW" "$CARBON_BP3" "$CARBON_IEDB" "$IEDB_REAL"; do
   [ -f "$f" ] || { echo "missing required artifact: $f" >&2; exit 1; }
@@ -52,6 +53,22 @@ echo "== carbon cost-model decomposition =="
 $PY -m edgeconbce.pipeline.carbon_decomposition --repeated-eval "$REPEATED" \
   --real-results "$IEDB_REAL" --output "$NESTED/carbon_decomposition.json"
 
+echo "== how far selection on the evaluation split moves the estimate =="
+$PY -m edgeconbce.pipeline.selection_bias_curve \
+  --carbon-predictions "$CARBON_BP3" --bepipred-raw-scores "$BEPIPRED_RAW" \
+  --reference-threshold 0.1512 --replicates 100 \
+  --output "$BIAS/selection_bias_curve.json"
+
+echo "== how published combined predictors select their combination parameter =="
+$PY -m edgeconbce.pipeline.selection_practice_survey \
+  --survey data/selection_practice_survey.md \
+  --output "$BIAS/selection_practice_survey.json"
+
+echo "== carbon break-even across remote model scales =="
+$PY -m edgeconbce.pipeline.carbon_scale_sensitivity \
+  --carbon-decomposition "$NESTED/carbon_decomposition.json" \
+  --output "$BIAS/carbon_scale_sensitivity.json"
+
 echo "== manuscript numbers, tables, figures =="
 $PY tools/make_numbers.py --repeated-eval "$REPEATED" --bepipred-summary "$BEPIPRED_SUMMARY" \
   --replication "$NESTED/replication_check.json" \
@@ -59,6 +76,9 @@ $PY tools/make_numbers.py --repeated-eval "$REPEATED" --bepipred-summary "$BEPIP
   --carbon-decomposition "$NESTED/carbon_decomposition.json" \
   --policy-resampling "$NESTED/policy_resampling.json" \
   --provenance-audit "$NESTED/provenance_audit.json" \
+  --carbon-scale-sensitivity "$BIAS/carbon_scale_sensitivity.json" \
+  --selection-survey "$BIAS/selection_practice_survey.json" \
+  --selection-bias-curve "$BIAS/selection_bias_curve.json" \
   --iedb-real-results "$IEDB_REAL" --output paper/generated_numbers.tex
 $PY tools/make_tables.py --repeated-eval "$REPEATED" \
   --nested-bp3 "$NESTED/nested_fusion_bp3_mcc.json" --nested-iedb "$NESTED/nested_fusion_iedb_mcc.json" \
@@ -69,6 +89,8 @@ $PY tools/make_tables.py --repeated-eval "$REPEATED" \
 $PY tools/make_figures.py --repeated-eval "$REPEATED" \
   --policy-resampling "$NESTED/policy_resampling.json" \
   --nested-bp3 "$NESTED/nested_fusion_bp3_mcc.json" --nested-iedb "$NESTED/nested_fusion_iedb_mcc.json" \
+  --selection-bias-curve "$BIAS/selection_bias_curve.json" \
+  --carbon-scale-sensitivity "$BIAS/carbon_scale_sensitivity.json" \
   --output-dir paper/figures
 
 echo "== manuscript =="

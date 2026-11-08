@@ -1,0 +1,227 @@
+Metadata-Version: 2.4
+Name: edgecon-bce
+Version: 0.1.0
+Summary: Edge-first B-cell epitope benchmarking for green systems research
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: PyYAML
+Requires-Dist: scikit-learn
+Provides-Extra: gpu
+Requires-Dist: fair-esm; extra == "gpu"
+Requires-Dist: torch; extra == "gpu"
+Provides-Extra: dev
+Requires-Dist: black; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+
+# EdgeConBCE
+
+EdgeConBCE is a reproducible benchmark workspace for studying local/edge routing trade-offs in conformational B-cell epitope prediction on the DTU `BP3C50ID` benchmark family.
+
+The repository started from the ideas in `DeepBCE.pdf` and now includes:
+
+- a packaged benchmark pipeline under [`src/edgeconbce`](src/edgeconbce)
+- real-data BP3 benchmarking with config-driven execution
+- a modern PLM/contact extension on top of the heuristic baseline family
+- 10-seed repeated evaluation with bootstrap intervals and paired sign tests
+- scenario analysis, manuscript tables, baseline comparison, transport benchmarking, and figure-input generation
+
+## Current Status
+
+As of `2026-05-26`, the repository is `manuscript-drafting ready` for a benchmark/trade-off paper, but it is **not yet a strong SCI-grade methods result**.
+
+What is complete:
+
+- official DTU benchmark inputs are present:
+  - [`BP3C50ID_training_set.fasta`](BP3C50ID_training_set.fasta)
+  - [`BP3C50ID_external_test_set.fasta`](BP3C50ID_external_test_set.fasta)
+- the real benchmark path is wrapped by the package entrypoint in [`src/edgeconbce/pipeline/run.py`](src/edgeconbce/pipeline/run.py)
+- heuristic and modern policy families are both implemented
+- 10-seed repeated BP3 evaluation is complete in [`outputs/bp3_repeated_eval_sci`](outputs/bp3_repeated_eval_sci)
+- scenario analysis, paper tables, baseline comparison, transport benchmark, and figure inputs are generated
+- unit-test coverage is in place under [`tests`](tests), with `22` passing tests in the current environment
+
+What is still missing for a stronger publication claim:
+
+- no local rerun of the official `BepiPred-3.0` executable or service outputs
+- no second benchmark family beyond `BP3C50ID`
+- carbon is still mostly estimated from fixed power assumptions rather than meter-based measurements
+- transport benchmarking is localhost loopback, not a real remote two-node deployment
+- the best repeated local results still do not convincingly exceed published `BepiPred-3.0` values
+
+## Policy Families
+
+Heuristic family:
+
+- `local_only`
+- `edge_only`
+- `adaptive_split`
+- `adaptive_carbon_guard`
+
+Modern PLM/contact family:
+
+- `plm_local_only`
+- `plm_edge_only`
+- `plm_adaptive_split`
+- `plm_adaptive_conformal_guard`
+
+## Latest Repeated Results
+
+Source: [`outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_summary.md`](outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_summary.md)
+
+10-seed aggregate over seeds `42` to `51`:
+
+| policy | MCC | F1 | ROC AUC | latency ms | total gCO2e | raw share |
+|---|---:|---:|---:|---:|---:|---:|
+| `local_only` | `0.1714` | `0.3553` | `0.6614` | `1.10` | `0.1200` | `0.0000` |
+| `edge_only` | `0.2151` | `0.3873` | `0.6821` | `87.02` | `0.1406` | `1.0000` |
+| `adaptive_split` | `0.2055` | `0.3819` | `0.6770` | `27.76` | `0.1604` | `0.2867` |
+| `adaptive_carbon_guard` | `0.1727` | `0.3599` | `0.6604` | `13.40` | `0.1388` | `0.1333` |
+| `plm_local_only` | `0.2061` | `0.3885` | `0.6829` | `111.10` | `0.1207` | `0.0000` |
+| `plm_edge_only` | `0.2186` | `0.3986` | `0.6961` | `208.64` | `0.1441` | `1.0000` |
+| `plm_adaptive_split` | `0.2104` | `0.3937` | `0.6857` | `164.01` | `0.1628` | `0.2933` |
+| `plm_adaptive_conformal_guard` | `0.2104` | `0.3937` | `0.6857` | `164.01` | `0.1628` | `0.2933` |
+
+Key repeated findings:
+
+- `adaptive_split` materially improves quality over `local_only`, but it is worse than `edge_only` on total carbon
+- `adaptive_carbon_guard` reduces routing and carbon relative to `adaptive_split`, but gives back most of the quality gain
+- `plm_local_only` is a real quality upgrade over the heuristic local baseline without raw-sequence sharing
+- `plm_edge_only` is the best repeated quality point in this repository, but it is also the slowest and shares every sequence
+- `plm_adaptive_split` and `plm_adaptive_conformal_guard` do not yet show a decisive quality gain over `plm_local_only`
+- `plm_adaptive_conformal_guard` currently collapses to the same operating point as `plm_adaptive_split`
+
+## Baseline Position
+
+Source: [`outputs/baseline_comparison_sci/baseline_comparison.md`](outputs/baseline_comparison_sci/baseline_comparison.md)
+
+Published same-split `BepiPred-3.0` comparators remain the main reality check:
+
+| model | ROC AUC | MCC | F1 |
+|---|---:|---:|---:|
+| `plm_edge_only` | `0.6961` | `0.2186` | `0.3986` |
+| `BepiPred-3.0 FFNN (ESM-1b)` | `0.6970` | `0.2200` | `0.4010` |
+| `BepiPred-3.0 final FFNN (+ SeqLen)` | `0.7140` | `0.2410` | `n/a` |
+
+Interpretation:
+
+- the repository now has a credible modern local baseline and a contact-aware edge refinement path
+- the best repeated result is close to published `BepiPred-3.0`, but does **not** clearly beat it
+- this supports a benchmark/workflow paper better than a strong new-biology or state-of-the-art claim
+
+## Generated Artifacts
+
+Core benchmark artifacts:
+
+- single-run real benchmark: [`outputs/edgeconbce_bp3_real_results_v3.json`](outputs/edgeconbce_bp3_real_results_v3.json)
+- repeated 10-seed summary: [`outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_summary.md`](outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_summary.md)
+- repeated 10-seed aggregate JSON: [`outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_aggregate_results.json`](outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_aggregate_results.json)
+
+Manuscript-support artifacts:
+
+- paper tables: [`outputs/paper_tables_sci/paper_tables.md`](outputs/paper_tables_sci/paper_tables.md)
+- scenario analysis: [`outputs/scenario_analysis_sci/scenario_analysis.md`](outputs/scenario_analysis_sci/scenario_analysis.md)
+- baseline comparison: [`outputs/baseline_comparison_sci/baseline_comparison.md`](outputs/baseline_comparison_sci/baseline_comparison.md)
+- transport benchmark: [`outputs/transport_benchmark_sci/transport_benchmark.md`](outputs/transport_benchmark_sci/transport_benchmark.md)
+- figure inputs: [`outputs/figure_inputs_sci/figure_inputs.md`](outputs/figure_inputs_sci/figure_inputs.md)
+- experiment protocol: [`docs/experiment_protocol.md`](docs/experiment_protocol.md)
+
+## How To Run
+
+The package is laid out under `src/`, so the simplest repo-local workflow is:
+
+```powershell
+$env:PYTHONPATH="src"
+```
+
+Run the current real BP3 benchmark:
+
+```powershell
+python -m edgeconbce.pipeline.run --config configs/bp3_real_v3.yaml
+```
+
+Run the 10-seed repeated BP3 evaluation:
+
+```powershell
+python -m edgeconbce.pipeline.run --config configs/bp3_repeated_eval_sci.yaml
+```
+
+Generate manuscript tables:
+
+```powershell
+python -m edgeconbce.pipeline.paper_tables `
+  --repeated-results outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_aggregate_results.json `
+  --real-results outputs/edgeconbce_bp3_real_results_v3.json `
+  --output-dir outputs/paper_tables_sci
+```
+
+Generate scenario analysis:
+
+```powershell
+python -m edgeconbce.pipeline.scenario_analysis `
+  --repeated-results outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_aggregate_results.json `
+  --output-dir outputs/scenario_analysis_sci
+```
+
+Generate baseline comparison:
+
+```powershell
+python -m edgeconbce.pipeline.baseline_comparison `
+  --repeated-results outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_aggregate_results.json `
+  --output-dir outputs/baseline_comparison_sci
+```
+
+Run the loopback transport benchmark:
+
+```powershell
+python -m edgeconbce.pipeline.transport_benchmark `
+  --real-results outputs/edgeconbce_bp3_real_results_v3.json `
+  --output-dir outputs/transport_benchmark_sci
+```
+
+Generate figure-ready CSV inputs:
+
+```powershell
+python -m edgeconbce.pipeline.figure_inputs `
+  --repeated-results outputs/bp3_repeated_eval_sci/bp3_real_multiseed_sci_aggregate_results.json `
+  --real-results outputs/edgeconbce_bp3_real_results_v3.json `
+  --baseline-results outputs/baseline_comparison_sci/baseline_comparison.json `
+  --transport-results outputs/transport_benchmark_sci/transport_benchmark.json `
+  --output-dir outputs/figure_inputs_sci
+```
+
+Run the test suite:
+
+```powershell
+python -m unittest discover -s tests -q
+```
+
+## Practical Notes
+
+- the real-data BP3 path is still wrapped around the legacy runner in [`edgeconbce_real_benchmark_v2.py`](edgeconbce_real_benchmark_v2.py) through [`src/edgeconbce/pipeline/real_benchmark.py`](src/edgeconbce/pipeline/real_benchmark.py)
+- the modern PLM/contact extension expects local ESM checkpoint files under `.torchcache/hub/checkpoints/`
+- repeated-run summaries report bootstrap confidence intervals and paired sign tests
+- transport benchmarking currently measures localhost serialized payloads, not a WAN or real edge node
+
+## Current Claim Boundary
+
+What this repository can support today:
+
+- a reproducible local-edge BCE benchmark workflow
+- a PLM-based local screening baseline with contact-aware edge refinement
+- repeated-run latency/carbon/privacy trade-off analysis on `BP3C50ID`
+
+What it should **not** claim yet:
+
+- state of the art
+- biological superiority over modern BCE predictors
+- greener-than-all-baselines deployment
+- realistic deployment carbon savings from end-to-end measured infrastructure
+
+## Project Origin
+
+- motivating source paper: [`DeepBCE.pdf`](DeepBCE.pdf)
+- product/research brief: [`green_edge_llm_prd.md`](green_edge_llm_prd.md)
+- earlier notebook prototype: [`green_edge_llm_benchmark_notebook.ipynb`](green_edge_llm_benchmark_notebook.ipynb)

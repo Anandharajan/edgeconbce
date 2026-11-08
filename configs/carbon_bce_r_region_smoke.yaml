@@ -1,0 +1,32 @@
+train_fasta_path: BP3C50ID_training_set.fasta
+test_fasta_path: BP3C50ID_external_test_set.fasta
+output_dir: outputs/_smoke_carbon_bce_r_region
+model_name: CARBON-BCE-R region-aware smoke
+dataset_name: BP3C50ID external test (15 antigens)
+
+seed: 42
+validation_fraction: 0.2
+epochs: 1
+batch_size: 8
+learning_rate: 0.0003
+weight_decay: 0.0001
+
+hidden_dim: 32
+cnn_dilation_rates:
+  - 1
+  - 2
+transformer_layers: 1
+attention_heads: 4
+dropout: 0.1
+
+focal_alpha: 0.75
+focal_gamma: 2.0
+smoothness_weight: 0.02
+tversky_weight: 0.15
+tversky_alpha: 0.45
+tversky_beta: 0.55
+prior_bias_init: true
+decision_threshold_grid:
+  start: 0.05
+  stop: 0.95
+  count: 19

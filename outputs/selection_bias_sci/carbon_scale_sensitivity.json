@@ -1,0 +1,159 @@
+{
+  "project": "EdgeConBCE",
+  "analysis": "carbon_scale_sensitivity",
+  "question": "Does the ordering that makes routing the most carbon-intensive policy survive a remote tier larger than the 8M-parameter model measured here?",
+  "identity": "r* = 1 - C_local / C_edge",
+  "assumption": "Operational cost is taken to scale with remote parameter count at fixed sequence length; the embodied charge is per request in the recorded model and is held fixed. Modelled, not metered.",
+  "recorded": {
+    "c_local_gco2e": 0.120003,
+    "embodied_edge_gco2e_per_request": 0.13692803819053065,
+    "c_edge_recorded_gco2e": 0.139335,
+    "embodied_reconstruction_gap_gco2e": 0.001196961809469349,
+    "operational_edge_gco2e_per_request": 0.00240696180946934,
+    "operational_share_of_edge_total": 0.017274638888070768,
+    "route_rate": 0.286667,
+    "break_even_at_measured_scale": 0.13874475185703516
+  },
+  "sensitivity": [
+    {
+      "operational_scale_factor": 1.0,
+      "c_edge_gco2e": 0.139335,
+      "break_even_route_rate": 0.13874475185703516,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": true
+    },
+    {
+      "operational_scale_factor": 2.0,
+      "c_edge_gco2e": 0.14174196180946932,
+      "break_even_route_rate": 0.15336997972901645,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": true
+    },
+    {
+      "operational_scale_factor": 5.0,
+      "c_edge_gco2e": 0.14896284723787734,
+      "break_even_route_rate": 0.1944098664523486,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": true
+    },
+    {
+      "operational_scale_factor": 10.0,
+      "c_edge_gco2e": 0.16099765628522406,
+      "break_even_route_rate": 0.25462890101081825,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": true
+    },
+    {
+      "operational_scale_factor": 20.0,
+      "c_edge_gco2e": 0.18506727437991743,
+      "break_even_route_rate": 0.35157093331557643,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": false
+    },
+    {
+      "operational_scale_factor": 40.0,
+      "c_edge_gco2e": 0.23320651056930425,
+      "break_even_route_rate": 0.4854217418413902,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": false
+    },
+    {
+      "operational_scale_factor": 81.0,
+      "c_edge_gco2e": 0.3318919447575472,
+      "break_even_route_rate": 0.6384275005900963,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": false
+    },
+    {
+      "operational_scale_factor": 160.0,
+      "c_edge_gco2e": 0.5220419277056251,
+      "break_even_route_rate": 0.7701276590418449,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": false
+    },
+    {
+      "operational_scale_factor": 375.0,
+      "c_edge_gco2e": 1.039538716741533,
+      "break_even_route_rate": 0.8845612981340867,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": false
+    },
+    {
+      "operational_scale_factor": 750.0,
+      "c_edge_gco2e": 1.9421493952925357,
+      "break_even_route_rate": 0.9382112414776802,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": false
+    }
+  ],
+  "checkpoints": [
+    {
+      "remote_checkpoint": "esm2_t6_8M_UR50D",
+      "parameters": 8000000.0,
+      "operational_scale_factor": 1.0,
+      "c_edge_gco2e": 0.139335,
+      "break_even_route_rate": 0.13874475185703516,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": true
+    },
+    {
+      "remote_checkpoint": "esm2_t12_35M_UR50D",
+      "parameters": 35000000.0,
+      "operational_scale_factor": 4.375,
+      "c_edge_gco2e": 0.14745849610695902,
+      "break_even_route_rate": 0.1861913476117658,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": true
+    },
+    {
+      "remote_checkpoint": "esm2_t30_150M_UR50D",
+      "parameters": 150000000.0,
+      "operational_scale_factor": 18.75,
+      "c_edge_gco2e": 0.18205857211808077,
+      "break_even_route_rate": 0.3408549863712671,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": false
+    },
+    {
+      "remote_checkpoint": "esm2_t33_650M_UR50D",
+      "parameters": 650000000.0,
+      "operational_scale_factor": 81.25,
+      "c_edge_gco2e": 0.3324936852099145,
+      "break_even_route_rate": 0.6390818673015157,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": false
+    },
+    {
+      "remote_checkpoint": "esm2_t36_3B_UR50D",
+      "parameters": 3000000000.0,
+      "operational_scale_factor": 375.0,
+      "c_edge_gco2e": 1.039538716741533,
+      "break_even_route_rate": 0.8845612981340867,
+      "route_rate": 0.286667,
+      "routing_exceeds_edge_only": false
+    }
+  ],
+  "exact_crossover": {
+    "operational_scale_factor": 13.004171886198256,
+    "implied_remote_parameters": 104033375.08958605,
+    "c_edge_gco2e": 0.16822858328438473,
+    "note": "Routing is the most carbon-intensive policy only while the remote tier costs less than this multiple of the measured remote call."
+  },
+  "first_factor_without_penalty": {
+    "operational_scale_factor": 20.0,
+    "c_edge_gco2e": 0.18506727437991743,
+    "break_even_route_rate": 0.35157093331557643,
+    "route_rate": 0.286667,
+    "routing_exceeds_edge_only": false
+  },
+  "first_checkpoint_without_penalty": {
+    "remote_checkpoint": "esm2_t30_150M_UR50D",
+    "parameters": 150000000.0,
+    "operational_scale_factor": 18.75,
+    "c_edge_gco2e": 0.18205857211808077,
+    "break_even_route_rate": 0.3408549863712671,
+    "route_rate": 0.286667,
+    "routing_exceeds_edge_only": false
+  },
+  "verdict": "ordering_inverts_at_realistic_remote_scale"
+}

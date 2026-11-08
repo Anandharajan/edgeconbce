@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edgecon-bce"
+version = "0.1.0"
+description = "Edge-first B-cell epitope benchmarking for green systems research"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy",
+  "PyYAML",
+  "scikit-learn",
+]
+
+[project.optional-dependencies]
+gpu = [
+  "fair-esm",
+  "torch",
+]
+dev = [
+  "black",
+  "mypy",
+  "pytest",
+  "ruff",
+]
+
+[project.scripts]
+edgeconbce = "edgeconbce.cli:main"
+edgeconbce-paper = "edgeconbce.pipeline.paper_tables:main"
+edgeconbce-scenarios = "edgeconbce.pipeline.scenario_analysis:main"
+edgeconbce-baselines = "edgeconbce.pipeline.baseline_comparison:main"
+edgeconbce-figures = "edgeconbce.pipeline.figure_inputs:main"
+edgeconbce-transport = "edgeconbce.pipeline.transport_benchmark:main"
+edgeconbce-two-node-transport = "edgeconbce.pipeline.two_node_transport_benchmark:main"
+edgeconbce-sci-readiness = "edgeconbce.pipeline.sci_readiness:main"
+edgeconbce-external-baselines = "edgeconbce.pipeline.external_baselines:main"
+edgeconbce-edge-server = "edgeconbce.deployment.edge_server:main"
+edgeconbce-carbon-bce-r = "edgeconbce.pipeline.carbon_bce_r:main"
+edgeconbce-fusion-baseline = "edgeconbce.pipeline.fusion_baseline:main"
+edgeconbce-iedb-robustness = "edgeconbce.pipeline.iedb_robustness:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

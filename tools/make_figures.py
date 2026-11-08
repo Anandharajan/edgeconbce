@@ -241,6 +241,53 @@ def per_sequence_strip(nested_paths: dict[str, Path], out: Path, metric: str = "
     return out
 
 
+
+def selection_bias_panel(curve_path: Path, scale_path: Path, out: Path) -> Path:
+    """Left: how selection bias grows as the design shrinks. Right: where the
+    carbon ordering crosses as the remote tier grows."""
+    style()
+    curve = json.loads(curve_path.read_text(encoding="utf-8"))
+    scale = json.loads(scale_path.read_text(encoding="utf-8"))
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.0))
+
+    ax = axes[0]
+    grids = sorted({r["grid_points"] for r in curve["rows"]})
+    for g in grids:
+        rows = sorted((r for r in curve["rows"] if r["grid_points"] == g),
+                      key=lambda r: r["antigens"])
+        if len(rows) < 2:
+            continue
+        ax.plot([r["antigens"] for r in rows], [r["mean_bias"] for r in rows],
+                marker="o", ms=3, lw=1.2, label=f"{g} weights")
+    ax.axhline(0.0, color="0.5", lw=0.8, ls="--")
+    ax.set_xlabel("antigens in the evaluation split")
+    ax.set_ylabel(f"selection bias ({curve['select_metric'].upper()})")
+    ax.set_title("Bias from selecting on the evaluation split", fontsize=8)
+    ax.legend(fontsize=6, frameon=False)
+
+    ax = axes[1]
+    rows = scale["checkpoints"]
+    x = [r["operational_scale_factor"] for r in rows]
+    y = [r["break_even_route_rate"] for r in rows]
+    ax.plot(x, y, marker="o", ms=4, lw=1.2, color="#1f77b4")
+    ax.axhline(scale["recorded"]["route_rate"], color="#d62728", lw=1.0, ls="--",
+               label="policy's routed fraction")
+    for r in rows:
+        ax.annotate(r["remote_checkpoint"].replace("esm2_", "").replace("_UR50D", ""),
+                    (r["operational_scale_factor"], r["break_even_route_rate"]),
+                    fontsize=5, xytext=(2, -6), textcoords="offset points")
+    ax.set_xscale("log")
+    ax.set_xlabel("remote operational cost (x measured)")
+    ax.set_ylabel("break-even routed fraction")
+    ax.set_title("Where routing stops costing carbon", fontsize=8)
+    ax.legend(fontsize=6, frameon=False, loc="lower right")
+
+    fig.tight_layout()
+    fig.savefig(out)
+    plt.close(fig)
+    return out
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--repeated-eval", required=True)
@@ -249,6 +296,8 @@ def main() -> int:
     p.add_argument("--policy-resampling",
                    help="antigen-level intervals; used for the policy figures when given")
     p.add_argument("--published-fusion-iedb")
+    p.add_argument("--selection-bias-curve")
+    p.add_argument("--carbon-scale-sensitivity")
     p.add_argument("--output-dir", required=True)
     a = p.parse_args()
 
@@ -280,6 +329,14 @@ def main() -> int:
         weight_stability(nested, out / "fig_weight_stability.pdf"),
         per_sequence_strip(nested, out / "fig_per_sequence.pdf"),
     ]
+    if a.selection_bias_curve and a.carbon_scale_sensitivity:
+        written.append(
+            selection_bias_panel(
+                Path(a.selection_bias_curve),
+                Path(a.carbon_scale_sensitivity),
+                out / "fig_selection_bias.pdf",
+            )
+        )
     for path in written:
         print("wrote", path)
     return 0

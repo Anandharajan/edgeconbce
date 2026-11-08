@@ -1,0 +1,32 @@
+{
+  "rows": [
+    {
+      "model": "BepiPred-3.0 official local rerun",
+      "source_type": "local_rerun",
+      "dataset": "BP3C50ID external test (15 antigens)",
+      "roc_auc": 0.770516,
+      "mcc": 0.315503,
+      "f1": 0.45973,
+      "average_precision": 0.414392,
+      "latency_ms": null,
+      "total_gco2e": null,
+      "raw_sequence_share_rate": null,
+      "notes": "Imported from official BepiPred-3.0 downloaded output on the BP3C50ID external FASTA.",
+      "source_url": "https://services.healthtech.dtu.dk/services/BepiPred-3.0/"
+    },
+    {
+      "model": "CBTOPE2",
+      "source_type": "published_different_split",
+      "dataset": "CBTOPE2 independent conformational BCE validation dataset",
+      "roc_auc": 0.64,
+      "mcc": null,
+      "f1": null,
+      "average_precision": null,
+      "latency_ms": null,
+      "total_gco2e": null,
+      "raw_sequence_share_rate": null,
+      "notes": "Published independent-dataset comparator; included only as a second modern BCE reference, not a same-split headline baseline.",
+      "source_url": "https://arxiv.org/abs/2506.13395"
+    }
+  ]
+}
