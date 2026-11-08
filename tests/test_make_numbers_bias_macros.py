@@ -65,3 +65,51 @@ def test_real_curve_grid_cell_is_replicated() -> None:
     ref = int(out["BiasGridRefN"])
     used = [r["replicates_used"] for r in d["rows"] if r["antigens"] == ref]
     assert min(used) > 1, f"n={ref} cell is not resampled"
+
+
+def test_size_trend_macros_ignore_unreplicated_full_split(tmp_path: Path) -> None:
+    """The full-split cell runs once; never quote it as a mean or a share."""
+    rows = []
+    for n, bias, share, reps in (
+        (4, 0.0542, 0.97, 100),
+        (12, 0.0321, 1.00, 100),
+        (15, 0.0444, 1.00, 1),      # full split: one deterministic draw
+    ):
+        rows.append({
+            "antigens": n, "grid_points": 21, "mean_bias": bias,
+            "share_bias_positive": share, "mean_predictor_agreement": 0.6,
+            "replicates_requested": 100, "replicates_used": reps,
+        })
+    path = tmp_path / "curve_sizes.json"
+    path.write_text(
+        json.dumps({"select_metric": "mcc", "rows": rows}), encoding="utf-8"
+    )
+    m = mk.MacroSet()
+    mk.add_selection_bias_curve(m, path)
+    out = dict(m.items()) if hasattr(m, "items") else m._macros  # noqa: SLF001
+    assert out["BiasSmallestN"] == "4"
+    assert out["BiasLargestN"] == "12", "must not read the full-split cell"
+    assert out["BiasAtLargestN"] == "0.0321"
+    assert out["BiasPositiveShareLargestN"] == "100"
+
+
+def test_full_split_macros_are_separate_from_the_trend(tmp_path: Path) -> None:
+    """The deterministic cell gets its own macros, distinct from the endpoint."""
+    rows = []
+    for n, bias, reps in ((4, 0.0542, 100), (12, 0.0315, 100), (15, 0.0444, 1)):
+        rows.append({
+            "antigens": n, "grid_points": 21, "mean_bias": bias,
+            "share_bias_positive": 1.0, "mean_predictor_agreement": 0.6,
+            "replicates_requested": 100, "replicates_used": reps,
+        })
+    path = tmp_path / "curve_full.json"
+    path.write_text(
+        json.dumps({"select_metric": "mcc", "rows": rows}), encoding="utf-8"
+    )
+    m = mk.MacroSet()
+    mk.add_selection_bias_curve(m, path)
+    out = dict(m.items()) if hasattr(m, "items") else m._macros  # noqa: SLF001
+    assert out["BiasFullSplitN"] == "15"
+    assert out["BiasFullSplitValue"] == "0.0444"
+    # and the trend endpoint is a different cell entirely
+    assert out["BiasAtLargestN"] != out["BiasFullSplitValue"]

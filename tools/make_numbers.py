@@ -393,8 +393,16 @@ def add_selection_bias_curve(m: MacroSet, path: Path) -> None:
     m.add("BiasReplicates", str(max(r["replicates_requested"] for r in rows)))
     m.add("BiasMetric", d["select_metric"].upper().replace("_", r"\_"))
 
+    # Size trend: read only cells that were actually resampled. At the full
+    # split there is one possible subset, so that cell is a single
+    # deterministic run; its "mean" is one draw and its positive share is
+    # either 0 or 100 by construction. Quoting either as an estimate is wrong.
     default_grid = 21
-    at_default = [r for r in rows if r["grid_points"] == default_grid]
+    at_default = [
+        r
+        for r in rows
+        if r["grid_points"] == default_grid and r["replicates_used"] > 1
+    ]
     if at_default:
         by_size = {r["antigens"]: r for r in at_default}
         smallest, largest = min(by_size), max(by_size)
@@ -406,6 +414,19 @@ def add_selection_bias_curve(m: MacroSet, path: Path) -> None:
         worst = max(at_default, key=lambda r: r["mean_bias"])
         m.add("BiasWorstN", str(worst["antigens"]))
         m.add("BiasWorstValue", fmt(worst["mean_bias"], 4))
+
+    # The full-split cell, reported separately and never as part of the trend.
+    # One subset exists at the full antigen count, so this is a single
+    # deterministic run: it is quoted only as an exact reproduction of the
+    # test-derived headline, not as an estimate with a sampling distribution.
+    full = [
+        r
+        for r in rows
+        if r["grid_points"] == default_grid and r["replicates_used"] == 1
+    ]
+    if len(full) == 1:
+        m.add("BiasFullSplitN", str(full[0]["antigens"]))
+        m.add("BiasFullSplitValue", fmt(full[0]["mean_bias"], 4))
 
     # Grid density: how much a denser scan buys the optimist. Read this at the
     # largest antigen count that was actually resampled. At the full split
