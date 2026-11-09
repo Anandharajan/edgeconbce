@@ -1,0 +1,18 @@
+{
+  "project": "EdgeConBCE",
+  "analysis": "selection_bias_decomposition",
+  "question": "How much of the headline test-derived-minus-nested gap is selection, and how much is the difference between pooling residues and averaging over antigens?",
+  "metric": "mcc",
+  "grid_points": 21,
+  "antigens": 15,
+  "replicates": 1,
+  "deterministic": true,
+  "test_derived_pooled": 0.011523513905501992,
+  "test_derived_per_antigen": 0.00590897157034773,
+  "nested_per_antigen": -0.032903190606421794,
+  "headline_gap": 0.044426704511923786,
+  "selection_component": 0.03881216217676953,
+  "aggregation_component": 0.005614542335154262,
+  "selection_share_of_headline": 0.873622354013511,
+  "note": "selection_component holds aggregation fixed by scoring the test-derived protocol per antigen, exactly as the nested estimator scores. aggregation_component is the residual and is not a selection effect."
+}

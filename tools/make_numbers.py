@@ -386,6 +386,25 @@ def add_selection_practice_survey(m: MacroSet, path: Path) -> None:
         m.add("SurveyLeakageShare", fmt(share * 100, 0))
 
 
+def add_selection_bias_decomposition(m: "MacroSet", path: Path) -> None:
+    """Macros for the split of the headline gap into selection and aggregation.
+
+    The headline gap compares a pooled-residue test-derived figure against a
+    nested estimate that averages per-antigen differences, so it carries an
+    aggregation difference as well as the selection effect. These macros let the
+    manuscript report the two separately instead of attributing the whole gap to
+    selection.
+    """
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    m.add("DecompHeadlineGap", fmt(data["headline_gap"], 4))
+    m.add("DecompSelection", fmt(data["selection_component"], 4))
+    m.add("DecompAggregation", fmt(data["aggregation_component"], 4))
+    m.add("DecompTestPerAntigen", fmt(data["test_derived_per_antigen"], 4))
+    share = data["selection_share_of_headline"]
+    m.add("DecompSelectionShare", fmt(100.0 * float(share), 0))
+    m.add("DecompGridPoints", str(int(data["grid_points"])))
+
+
 def add_selection_bias_curve(m: MacroSet, path: Path) -> None:
     """How selection bias scales with antigen count and weight-grid density."""
     d = json.loads(path.read_text(encoding="utf-8"))
@@ -462,6 +481,7 @@ def main() -> int:
     p.add_argument("--carbon-scale-sensitivity")
     p.add_argument("--selection-survey")
     p.add_argument("--selection-bias-curve")
+    p.add_argument("--selection-bias-decomposition")
     p.add_argument("--transport")
     p.add_argument("--two-node-transport")
     p.add_argument("--iedb-real-results")
@@ -486,6 +506,8 @@ def main() -> int:
         add_selection_practice_survey(m, Path(a.selection_survey))
     if a.selection_bias_curve:
         add_selection_bias_curve(m, Path(a.selection_bias_curve))
+    if a.selection_bias_decomposition:
+        add_selection_bias_decomposition(m, Path(a.selection_bias_decomposition))
     if a.transport:
         add_transport(m, Path(a.transport), "Transport")
     if a.two_node_transport:

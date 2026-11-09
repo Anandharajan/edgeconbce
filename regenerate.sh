@@ -59,6 +59,12 @@ $PY -m edgeconbce.pipeline.selection_bias_curve \
   --reference-threshold 0.1512 --replicates 100 \
   --output "$BIAS/selection_bias_curve.json"
 
+echo "== how much of the headline gap is selection, how much is aggregation =="
+$PY -m edgeconbce.pipeline.selection_bias_decomposition \
+  --carbon-predictions "$CARBON_BP3" --bepipred-raw-scores "$BEPIPRED_RAW" \
+  --reference-threshold 0.1512 \
+  --output "$BIAS/selection_bias_decomposition.json"
+
 echo "== how published combined predictors select their combination parameter =="
 $PY -m edgeconbce.pipeline.selection_practice_survey \
   --survey data/selection_practice_survey.md \
@@ -79,6 +85,7 @@ $PY tools/make_numbers.py --repeated-eval "$REPEATED" --bepipred-summary "$BEPIP
   --carbon-scale-sensitivity "$BIAS/carbon_scale_sensitivity.json" \
   --selection-survey "$BIAS/selection_practice_survey.json" \
   --selection-bias-curve "$BIAS/selection_bias_curve.json" \
+  --selection-bias-decomposition "$BIAS/selection_bias_decomposition.json" \
   --iedb-real-results "$IEDB_REAL" --output paper/generated_numbers.tex
 $PY tools/make_tables.py --repeated-eval "$REPEATED" \
   --nested-bp3 "$NESTED/nested_fusion_bp3_mcc.json" --nested-iedb "$NESTED/nested_fusion_iedb_mcc.json" \
