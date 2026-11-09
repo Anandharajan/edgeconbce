@@ -114,3 +114,41 @@ a laboratory would really call sits on the other side of it.
   \ScaleCrossoverFactor{}\(\times\) the one measured, which the reference
   predictor's own backbone exceeds (Section~\ref{sec:routing-results}).
 \end{enumerate}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_architecture.png}
+\caption{Routing antigens between a bench predictor and a published remote
+model, and the protocol used to evaluate it. \textbf{(a)}~For each newly
+expressed antigen the on-device predictor runs first; antigens whose mean
+per-residue uncertainty exceeds a fitted threshold are escalated to the remote
+model, subject to a routed-fraction budget. Escalation is what discloses the
+sequence, so the padlock opens only on the uplink. The strip beneath compares
+the routed policy with always-local and always-remote execution on latency,
+disclosure and modelled carbon. \textbf{(b)}~The mixing weight and the decision
+threshold can be chosen two ways. The test-derived protocol scans the weight
+grid on the same antigens it reports, so its arrow returns into its own source;
+nested cross-validation chooses both on the training folds alone and applies
+them unchanged to the held-out antigen. \textbf{(c)}~Modelled carbon favours
+always-remote execution only below a crossover in remote operational cost.
+Carbon throughout is modelled from device power, an amortised embodied term and
+measured latency, and is not metered.}
+\label{fig:architecture}
+\end{figure*}
+
+\paragraph{What the two halves give together.} Figure~\ref{fig:architecture}
+puts the deployment and its evaluation on one page, and the pairing is what
+this work contributes. Panel~(a) is a measurement a laboratory can act on: for
+one antigen, the same runs yield the latency, the share of sequence that leaves
+the device and the modelled carbon of each routing policy, so the three can be
+weighed against one another instead of argued separately. Panel~(b) decides
+whether the quality column of that readout means anything. Running both
+selection protocols over the same antigens turns a disagreement about method
+into a measured quantity, and that quantity is larger than the effect it was
+invoked to support. Two things follow that a single-protocol study cannot
+reach. The size of the selection step can be tracked as the antigen count and
+the grid density vary, and separated from the difference between pooling
+residues and averaging over antigens. And the cost side can be pushed past the
+hardware actually measured: panel~(c) locates the remote scale at which the
+carbon ordering reverses, which the reference predictor's own backbone already
+exceeds.
