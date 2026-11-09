@@ -3,17 +3,20 @@
 
 \subsection{Conformational B-cell epitope prediction}
 
-A B-cell epitope is the part of an antigen that an antibody binds. Linear
-epitopes are contiguous in sequence; conformational epitopes, which are the
-large majority of what antibodies actually recognise, are assembled from
-residues that the folded structure brings together but that may be far apart in
-the chain. Prediction is therefore a per-residue binary labelling problem with
-two awkward properties: positives are a minority of residues, and the label
-depends on structural context that the sequence encodes only implicitly.
+A B-cell epitope is the part of an antigen that an antibody binds in an
+antibody--antigen complex. Linear B-cell epitopes are contiguous in sequence;
+conformational, or discontinuous, epitopes, which are the large majority of
+what antibodies actually recognise, are assembled from residues that the folded
+structure brings together but that may be far apart in the chain. Prediction is
+therefore per-residue binary labelling, each residue being called an epitope
+residue or not, and two properties of that task are awkward. Epitope residues
+are a minority of all residues, and the label depends on structural context
+that the sequence encodes only implicitly.
 
 Methods have moved through three broad generations. Propensity-scale approaches
 scored residues with physicochemical heuristics. Structure-based methods used
-solved or modelled structures to compute accessibility and protrusion.
+solved or modelled structures to compute relative solvent accessibility and
+protrusion for each surface residue.
 The current generation feeds representations from a pre-trained protein language
 model into a supervised head, which is how BepiPred-3.0 \citep{clifford2022bepipred}
 and structure-aware successors such as DiscoTope-3.0 \citep{hoie2024discotope}
@@ -28,13 +31,15 @@ have BepiPred-3.0 predictions, so the reference there is our own local-only
 predictor. The two fusion arms therefore test different pairs, and we keep
 them separate throughout.
 
-Evaluation in this area is dominated by the BP3C50ID benchmark distributed with
-BepiPred-3.0, whose external test split holds \BepipredNumAntigens{} antigens
-(\BepipredResidues{} residues, \BepipredPositives{} of them positive). That is a
-small split, and its size is worth keeping in view when reading any comparison
-built on it, including ours. We report the Matthews correlation coefficient
-alongside ROC-AUC and average precision, because MCC behaves sensibly under the
-class imbalance that per-residue epitope labelling produces
+Evaluation in this area is dominated by the non-redundant BP3C50ID benchmark
+distributed with BepiPred-3.0, whose external test split holds
+\BepipredNumAntigens{} antigens (\BepipredResidues{} residues,
+\BepipredPositives{} of them positive). That independent benchmark is a small
+one, and its size is worth keeping in view when reading any comparison built on
+it, including ours. We report the Matthews correlation coefficient (MCC)
+alongside the threshold-independent ROC-AUC and average precision, because MCC
+behaves sensibly under the class imbalance that per-residue epitope labelling
+produces
 \citep{chicco2020mcc}. Under that imbalance, accuracy and F1 can both be high
 for a predictor that has learned little.
 
@@ -47,8 +52,8 @@ model, a remote model, and a per-input signal about difficulty, so that some
 combination of accuracy, latency, cost and bandwidth is optimised
 \citep{matsubara2022split}. The signal is usually the
 local model's own confidence. That makes the mechanism attractively simple, and
-it also introduces its characteristic failure: the decision is only as good as
-the calibration of the model making it.
+it also introduces its characteristic failure, since the decision is only as
+good as the calibration of the model making it.
 
 Whether offloading saves energy at all is a settled question in that
 literature. The answer depends on the ratio of computation offloaded to the
@@ -62,10 +67,11 @@ that per-residue epitope screening sits on the unfavourable side of it.
 
 Two things are different in the setting we study. The first is that the
 quantity a laboratory wants to minimise is often not bandwidth or cost but
-disclosure, meaning how many of its sequences are transmitted at all. That is a
-counting measure rather than a continuous one, and no accuracy-oriented
-objective captures it. The second is that the per-antigen compute is small
-enough that the routing decision is not free relative to the work it schedules.
+disclosure, meaning how many of its sequences are transmitted at all.
+Disclosure is a counting measure rather than a continuous one, and no
+accuracy-oriented objective captures it. The second is that the per-antigen
+compute is small enough that the routing decision is not free relative to the
+work it schedules.
 In large-model serving, a confidence check is negligible beside the inference it
 gates. In per-residue epitope screening on short sequences, it is not. The
 carbon results in Section~\ref{sec:routing-results} are a consequence of that
@@ -83,30 +89,78 @@ energy model follows the formulation of Green Algorithms
 That formulation has been applied to bioinformatics workloads specifically
 \citep{grealey2022carbon}. We claim no novelty in the instrument. The
 result is a model whose output is proportional to measured latency by
-construction. It is useful for comparing policies that run on the same hardware,
-since the proportionality constant cancels; it is not a measurement of what any
-particular laboratory's equipment would draw, and we are careful not to present
+construction. The model is useful for comparing policies that run on the same
+hardware, since the proportionality constant cancels; it is not a measurement
+of what any particular laboratory's equipment would draw, and we are careful
+not to present
 it as one. Table~\ref{tab:provenance} records which of our reported quantities
 are measured and which are modelled.
 
 \subsection{Selection on the evaluation split}
 
-When a method has a free parameter --- an ensemble weight, a decision threshold,
-a fusion coefficient --- and that parameter is chosen by trying candidates and
-keeping whichever scores best on the data the paper reports, the reported score
-is biased upward. The bias grows with the number of candidates tried and
-shrinks with the size of the evaluation set. This is not a new observation.
+When a method has a tuning parameter, an ensemble weight or a decision
+threshold or a fusion coefficient, and that parameter is chosen by scoring a
+parameter grid on the data the paper reports, the reported figure is an
+over-optimistic estimate of the predictor's true error. Model selection bias of
+this kind grows with the number of grid points tried and shrinks with the size
+of the evaluation set, and it is not a new observation.
+
+The mechanism itself is one line of algebra, and it is worth setting down
+because it fixes what can and cannot be concluded from it. Write
+\(\mathcal{W}_G\) for a grid of \(G\) candidate values of the tuning
+parameter, \(\widehat{M}(w)\) for the metric of the configuration indexed by
+\(w\) computed on the split the figure is reported on, and \(M(w)\) for the
+quantity that \(\widehat{M}(w)\) estimates. A grid scan reports
+\(\max_{w \in \mathcal{W}_G} \widehat{M}(w)\). For any grid point
+\(w_0 \in \mathcal{W}_G\) fixed in advance of seeing that split, and for any
+finer grid \(\mathcal{W}_{G'} \supseteq \mathcal{W}_G\),
+\begin{equation}
+\label{eq:selection-max}
+\mathbb{E}\Big[\max_{w \in \mathcal{W}_G} \widehat{M}(w)\Big]
+  \;\ge\; \mathbb{E}\big[\widehat{M}(w_0)\big] \;=\; M(w_0),
+\qquad
+\mathbb{E}\Big[\max_{w \in \mathcal{W}_G} \widehat{M}(w)\Big]
+  \;\le\; \mathbb{E}\Big[\max_{w \in \mathcal{W}_{G'}} \widehat{M}(w)\Big].
+\end{equation}
+Both parts hold split by split before any expectation is taken: the maximum of
+a finite set is at least as large as any member of it, which gives the first
+inequality, and enlarging the set over which a maximum is taken cannot decrease
+it, which gives the second; expectation preserves both orderings. The single
+equality is the one assumption, namely that at a grid point chosen without
+reference to the split, \(\widehat{M}(w_0)\) is unbiased for \(M(w_0)\),
+which is what a held-out split buys and what the maximum destroys.
+
+Equation~\eqref{eq:selection-max} settles two things and no more. It fixes the
+sign: a scanned maximum sits on average at or above the performance of any
+configuration one could have committed to beforehand, so the direction of the
+distortion is known before any data are seen. And it makes the effect
+non-decreasing under refinement of a \emph{nested} family of grids, which is
+why a wider grid is the more flattering protocol. That condition is worth
+stating, because equally spaced grids of different sizes are not nested: the
+weight \(0.25\) lies in a five-point grid but not in an eleven-point one, so
+two such grids are not ordered by inclusion and the inequality says nothing
+about that pair. It supplies no magnitude either. How far above \(M(w_0)\) the
+expected maximum sits depends on the correlation and the noise scale of the
+\(\widehat{M}(w)\) across the grid, which the inequality does not constrain;
+the bound is not tight, and it holds with equality only where the scan returns
+\(w_0\), or a grid point with the same \(\widehat{M}\), on every split. The magnitude reported in this paper is
+therefore measured and not derived: Section~\ref{sec:bias-curve} estimates it by resampling, and
+that measured gap is an estimate of the difference between two protocols on
+these data, not of the expected bias in
+Equation~\eqref{eq:selection-max}.
+
 \citet{varma2006bias} demonstrated it for bioinformatics classifiers two decades
-ago and showed that nested resampling removes the bias.
+ago and showed that nested resampling, which estimates the error in an outer
+loop over the left-out samples, returns a nearly unbiased estimate.
 \citet{boulesteix2009overoptimism}
 named the resulting pattern over-optimism. \citet{jelizarow2010overoptimism}
 showed that re-evaluating a published positive result without its optimistic
 selection step can remove the advantage entirely. \citet{kapoor2023leakage}
 survey how widely the problem persists across applied machine-learning research
-and how often it is invisible in the write-up, because a table of candidate
+and how often it is invisible in the write-up. The cause is that a table of candidate
 values reads as a sensitivity analysis whether or not the reported
 configuration was picked from it. The distinction that matters is not whether
-the sweep is shown but whether
+the parameter grid is shown but whether
 the reported configuration was chosen using the labels it is then scored
 against. Section~\ref{sec:fusion-protocol} sets out the two protocols we compare
 precisely enough for the difference to be checked.

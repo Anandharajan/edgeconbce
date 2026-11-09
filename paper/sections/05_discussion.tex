@@ -1,6 +1,38 @@
 \section{Discussion}
 \label{sec:discussion}
 
+\subsection{What the fusion result means, and what it does not}
+
+Our result is that a convex blend of CARBON-BCE-R with BepiPred-3.0 shows no
+advantage over BepiPred-3.0 alone, on either of two datasets, once the blend is
+chosen without reference to the evaluation labels. The scope of that claim
+matters.
+
+Our result does not show that score fusion is useless in epitope prediction. It
+bears on one pair of predictors on two splits. One member of that pair is
+considerably weaker than the other, and the inner scan consistently
+down-weighted it. A fusion of two comparably strong and genuinely
+complementary predictors might well behave differently. Nothing here tests that.
+
+We also make no claim that the earlier result was dishonestly produced. The
+protocol that generated it is easy to arrive at by accident, because a weight
+sweep serves two different purposes that look the same on the page. Presented as
+a sensitivity analysis, it answers "how fragile is this result to the weight?"
+Used to pick the reported row, it answers "what is the best this combination can
+look like?" The second question's answer is then reported as though it were the
+first's. The diagnostic is procedural, not statistical. Ask whether the
+configuration being reported was selected using the labels it is scored against.
+
+What the result does establish is narrower: on data of this kind, the
+difference between the two protocols is large enough to manufacture a positive
+finding out of a null one. Here the optimistic protocol had produced a
+plausible-looking effect with a bootstrap interval attached. Reporting an
+interval does not protect against model selection bias when the selection
+happened before the interval was computed. Nested cross-validation is
+inexpensive: one extra outer loop over antigens, no new data, no new
+model. We think it should be the
+default whenever a combination parameter is tuned on a dataset of this size.
+
 \subsection{Routing is a disclosure and latency mechanism, not a green one}
 
 The case for local--edge routing in a screening pipeline is sound, but it is a
@@ -18,8 +50,8 @@ them. We had originally read the same comparisons as decisive, on intervals
 computed over seeds, and Section~\ref{sec:routing-results} explains why those
 were the wrong intervals. A laboratory deciding whether to adopt routing should
 therefore treat the latency and disclosure gains as established here and the
-quality question as open. That is a less satisfying recommendation than the one
-we set out to make. It is also a more defensible one.
+quality question as open. That recommendation satisfies less than the one we
+set out to make, and it defends better.
 
 What the mechanism does not buy is lower energy, and
 Equation~\ref{eq:carbon-threshold} says precisely when it would. Offloading
@@ -28,17 +60,18 @@ saves energy only above a ratio of work offloaded to overhead incurred
 task, at a routed fraction of \CarbonBreakEvenRate{}, and to observe that a
 policy tuned for predictive quality routes about twice as often as that.
 
-We initially read that as a negative result about routing. It is better read
-as a statement about the pair being routed between. The boundary is not fixed:
-it climbs with the cost of a remote call, and crosses the policy's routed
-fraction once that call costs \ScaleCrossoverFactor{} times the one we
-measured. Our local and remote tiers were both small, which is close to the
-worst case for a gate --- the gating pass is a large fraction of the work it
-gates. A laboratory routing to BepiPred-3.0, built on ESM-2 650M, is five
-times past the crossing, and for that deployment the green argument recovers.
-The honest summary is therefore not that routing costs carbon but that a gate
-earns its carbon only when what it gates is substantially more expensive than
-the gate, and that we measured a configuration where it is not.
+We had initially read that as a negative result about routing. The finding
+reads better as a statement about the pair being routed between. The boundary
+is not fixed: it climbs with the cost of a remote call, and crosses the
+policy's routed fraction once that call's operational charge reaches
+\ScaleCrossoverFactor{} times the one we measured. Our local and remote tiers were both small. Two tiers of
+similar size sit close to the worst case for a gate, because the gating pass
+is a large fraction of the work it gates. A laboratory routing to
+BepiPred-3.0, built on ESM-2 650M, sits several times past that crossing, and for
+that deployment the green argument recovers. The honest summary is therefore
+not that routing costs carbon but that a gate earns its carbon only when what
+it gates is substantially more expensive than the gate. We measured a
+configuration where it is not.
 
 The practical recommendation follows from the ratio rather than from our sign.
 Adopt routing when sequence disclosure or turnaround is the binding
@@ -46,38 +79,6 @@ constraint. On environmental grounds, evaluate
 Equation~\ref{eq:carbon-threshold} for the models actually in use: with a
 small local screen in front of a large remote predictor it will usually
 favour routing, and with two models of similar size it will not.
-
-\subsection{What the fusion result means, and what it does not}
-
-Our result is that a convex blend of CARBON-BCE-R with BepiPred-3.0 shows no
-advantage over BepiPred-3.0 alone, on either of two datasets, once the blend is
-chosen without reference to the evaluation labels. The scope of that claim
-matters.
-
-It is not a claim that score fusion is useless in epitope prediction. It is a
-claim about one pair of predictors on two splits. One member of that pair is
-considerably weaker than the other, and the folds consistently chose to
-down-weight the weaker member. A fusion of two comparably strong and genuinely
-complementary predictors might well behave differently. Nothing here tests that.
-
-It is also not a claim that the earlier result was dishonestly produced. The
-protocol that generated it is easy to arrive at by accident, because a weight
-sweep serves two different purposes that look the same on the page. Presented as
-a sensitivity analysis, it answers "how fragile is this result to the weight?"
-Used to pick the reported row, it answers "what is the best this combination can
-look like?" The second question's answer is then reported as though it were the
-first's. The diagnostic is procedural rather than statistical: ask whether the
-configuration being reported was selected using the labels it is scored against.
-
-What the result does establish is that in this corner of the literature the
-difference between the two protocols is large enough to manufacture a positive
-finding out of a null one, on data where the optimistic protocol produced a
-plausible-looking effect with a bootstrap interval attached. Reporting an
-interval does not protect against selection bias when the selection happened
-before the interval was computed. Given how inexpensive the nested alternative
-is --- one extra loop over
-sequences, no new data, no new model --- we think it should be the default
-whenever a combination parameter is tuned on a dataset of this size.
 
 \subsection{Relation to prior work}
 
@@ -96,11 +97,11 @@ benchmark for that reason. Within the scope of inference routing, however, we
 are not aware of prior work that routes between a local and a remote
 conformational epitope predictor and measures the consequences. Federated
 approaches to protein modelling address a different problem. They distribute
-training rather than place inference.
+training; they do not place inference.
 
 The systems contribution sits alongside the split-computing literature
-\citep{matsubara2022split}, from which the routing mechanism is borrowed rather
-than invented. What we add is the measurement of that mechanism against the
+\citep{matsubara2022split}, from which we borrow the routing mechanism instead
+of inventing it. What we add is the measurement of that mechanism against the
 objectives a wet-lab screening workflow actually has. That includes the
 counting measure of raw-sequence disclosure, which accuracy-oriented
 formulations do not express, and the observation that the energy argument

@@ -1,6 +1,276 @@
 \section{Results}
 \label{sec:results}
 
+\subsection{Reproducing the previously reported fusion advantage}
+\label{sec:replication}
+
+Before re-estimating the fusion effect we checked that any change could be
+attributed to the protocol and not to our reimplementation. The
+original selection rule blends raw scores, scans the parameter grid of fusion
+weights on the evaluation split, and fixes the decision threshold so that the
+blend calls as many residues epitope residues as the reference predictor does
+on that same split. Both tuning parameters are therefore optimised on the data
+the result is reported on. Run through the loaders and
+metric code used throughout this paper, that rule reproduces the earlier analysis. All
+\TunedBpThreeReplicationRows{} entries of its stored weight-sensitivity grid
+agree to within \TunedBpThreeReplicationMaxDiff{}, inside the
+\TunedBpThreeReplicationTolerance{} tolerance the check applies and consistent
+with the precision at which that grid had been rounded. The procedure independently
+selects the same grid optimum, \(w=\TunedBpThreeWeight{}\), and the same
+positive-call count of \TunedBpThreePositiveCalls{}. The replication script
+executes this comparison and records its outcome in the artifact
+(status: \TunedBpThreeReplicationStatus{}); we do not assert it here.
+Differences between the two protocols below are therefore attributable to how
+the tuning parameters are chosen, not to a difference in implementation.
+
+\subsection{The fusion advantage does not survive nested selection}
+\label{sec:fusion-results}
+
+
+\input{tables/tab_fusion}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_fusion_forest.pdf}
+\caption{The fusion effect against the reference predictor under two selection
+protocols. Blue intervals are mean per-antigen differences with 95\% bootstrap
+intervals under leave-one-sequence-out nested selection; orange squares are the
+corresponding estimates when the weight and threshold are chosen on the
+evaluation split. On both datasets the nested interval contains zero while the
+test-derived estimate sits above it.}
+\label{fig:fusion-forest}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_per_sequence.pdf}
+\caption{Per-antigen change in ROC-AUC from fusion under nested selection,
+ordered by effect. The dispersion, particularly on the IEDB subset, is much
+larger than the mean effect in either direction.}
+\label{fig:per-sequence}
+\end{figure*}
+
+Table~\ref{tab:fusion} and Figure~\ref{fig:fusion-forest} give both protocols on
+both datasets, each nested estimate built from one out-of-fold prediction per
+held-out antigen.
+
+In ROC-AUC, the threshold-independent metric, nested cross-validation leaves a
+mean per-antigen difference on BP3C50ID against
+BepiPred-3.0 of \NestedBpThreeDeltaAuc{}
+[\NestedBpThreeDeltaAucLo{}, \NestedBpThreeDeltaAucHi{}], with
+\NestedBpThreeWinsAuc{} of \NestedBpThreeSequences{} antigens improving and a
+Wilcoxon $p$ of \NestedBpThreePAuc{}. MCC, its threshold-dependent
+counterpart, behaves the same way
+(\NestedBpThreeDeltaMcc{} [\NestedBpThreeDeltaMccLo{}, \NestedBpThreeDeltaMccHi{}],
+$p=\NestedBpThreePMcc{}$).
+
+The larger IEDB subset behaves the same way, with one important difference in
+what it tests. We have no BepiPred-3.0 predictions for those antigens, so that
+arm fuses the candidate with our own local-only predictor in place of
+BepiPred-3.0. That arm poses the same selection question a second time without
+replicating the same comparison, and we do not read it as independent
+confirmation of the BepiPred-3.0 result. The mean per-antigen
+difference in ROC-AUC is \NestedIedbDeltaAuc{}
+[\NestedIedbDeltaAucLo{}, \NestedIedbDeltaAucHi{}], with
+\NestedIedbWinsAuc{} of \NestedIedbSequences{} antigens improving
+($p=\NestedIedbPAuc{}$), and MCC gives \NestedIedbDeltaMcc{}
+[\NestedIedbDeltaMccLo{}, \NestedIedbDeltaMccHi{}]. Every interval on both
+datasets contains zero. Both the Wilcoxon test and the sign test discard
+antigens whose paired difference is exactly zero. On BP3C50ID this removes
+\NestedBpThreeTiesAuc{} antigens for ROC-AUC and \NestedBpThreeTiesMcc{} for
+MCC; on the IEDB subset, \NestedIedbTiesAuc{} and \NestedIedbTiesMcc{}. The
+effective sample size is therefore smaller than the stated number of antigens
+by that count.
+
+We are careful about what these nulls support. An interval containing zero is
+not evidence that the effect is zero, and at these sample sizes the paired
+design cannot resolve effects of the size at issue. With the observed
+per-antigen dispersion, the smallest difference BP3C50ID could detect with
+80\% power at a two-sided 5\% level is \NestedBpThreeMdeMcc{} in MCC and
+\NestedBpThreeMdeAuc{} in ROC-AUC; on the IEDB subset the corresponding
+figures are \NestedIedbMdeMcc{} and \NestedIedbMdeAuc{}. The MCC effect the
+test-derived protocol reports, \TunedBpThreeDeltaMcc{}, is far below what the
+nested analysis could have detected. A non-significant nested result was close
+to guaranteed, so it carries little evidential weight against that specific
+effect.
+
+What the design does identify is the behaviour of the estimator. Under the
+test-derived protocol the same BP3C50ID data yield \TunedBpThreeDeltaMcc{} MCC
+and \TunedBpThreeDeltaAuc{} ROC-AUC in favour of fusion; under nested
+cross-validation the same quantity on the same data is \NestedBpThreeDeltaMcc{} and
+\NestedBpThreeDeltaAuc{}. The point estimate does not shrink towards zero, it
+changes sign. This comparison therefore identifies how far model selection
+bias moves the estimate; it does not identify the underlying effect. The
+defensible conclusion is that
+the test-derived estimate is over-optimistic by at least the distance between the two,
+not that fusion does not help.
+
+Figure~\ref{fig:per-sequence} shows the per-antigen performance differences behind these
+means. The dispersion is far larger than the mean in both directions. A null
+effect over a small number of antigens looks exactly like this, which is why we
+report the paired tests instead of a pooled number alone.
+
+\subsection{Which predictor the procedure prefers}
+\label{sec:weight-transfer}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_weight_stability.pdf}
+\caption{The fusion weight selected in each training fold, by dataset, with
+medians marked. Both datasets place almost all of the weight on the reference
+predictor, which is the same conclusion the null effect reaches by a different
+route.}
+\label{fig:weight-stability}
+\end{figure*}
+
+The null effect leaves open what the selection procedure does with its
+freedom. Figure~\ref{fig:weight-stability} plots the mixing weight chosen in
+each training fold of the outer loop. On BP3C50ID the folds settle around a median of \NestedBpThreeWeightMedian{}
+(range \NestedBpThreeWeightMin{} to \NestedBpThreeWeightMax{}); on the IEDB
+subset the median is \NestedIedbWeightMedian{} (range \NestedIedbWeightMin{} to
+\NestedIedbWeightMax{}). Both sit close to the upper end of the parameter grid, so the inner
+loop gives our predictor almost no influence over
+the blended score.
+
+The selected weights offer an independent route to the same
+conclusion. The nested evaluation says the blend cannot be distinguished from
+the reference predictor, and the selected weights say why. Given a free choice,
+the inner loop declines to use the second predictor. A fusion
+whose fitted weight approaches one is not a combination of two models but the
+stronger model with extra machinery attached.
+
+\subsection{How often the published literature selects this way}
+\label{sec:survey}
+
+The result above is a correction to our own unpublished analysis, which bounds
+how much it matters. Is the practice confined to us? To find out we surveyed
+published B-cell epitope predictors that combine two or more models, whether
+by score fusion, ensembles, stacking or consensus voting. Of each
+meta-predictor we asked whether the combination parameter was chosen using the
+same data the headline performance is reported on. The survey covers
+\SurveyAssessed{} assessable papers and records, for every one, the verbatim
+sentence the judgement rests on; it is released with the code.
+
+We keep three categories apart. \SurveyLeakage{} papers are \emph{leakage
+evident}: the text states that a mixing weight, a voting rule, an ensemble
+composition or a reported configuration was chosen by inspecting performance
+on the evaluation data. \SurveyClean{} are \emph{leakage-free evident}: a
+validation split, the training set, or a rule fixed a priori.
+\SurveyUnreported{} are \emph{unreported}: the paper does not say on which
+data the tuning parameter was chosen. We do not count the third group as
+leakage. That count observes what the methods section contains, and its size is
+itself the point --- a quarter of the sample does not let a reader check.
+Among the \SurveyStatingBasis{} papers that do state a basis,
+\SurveyLeakageShare{}\% selected on their own evaluation data.
+
+These counts are not a prevalence estimate and we do not offer them as one.
+The sample is open-access only, reachable by keyword, and skewed towards
+recent and prominent work; paywalled methods papers are structurally absent.
+With \SurveyAssessed{} papers each count carries a sampling error of one or
+two. Three things the survey does establish. The selection step we found in our
+own work is present in the published literature. Among the papers that
+disclose enough to tell, it is not rare. And a substantial minority of papers
+disclose too little for the question to be asked at all. The magnitude such a
+step can reach is the subject of the next section.
+
+\subsection{How large the selection step is, and what governs it}
+\label{sec:bias-curve}
+
+The sections above establish that model selection bias moved our estimate and
+that the practice occurs in print. Neither says how large an effect a reader
+should expect it to produce. Resampling the same data answers that.
+
+For a given antigen count and parameter grid we draw a subset without
+replacement, estimate the fused-minus-reference difference on it twice, and
+record the gap. The first estimate scans the parameter grid on the subset and
+keeps the best row, which is the protocol a paper follows when it reports a
+tuned combination parameter without holding anything out. The second applies
+leave-one-sequence-out selection inside the same subset. Both estimators see
+exactly the same antigens, so the gap does not come from which data were
+drawn; it is a difference of protocol, decomposed below. Write
+\(\widehat{\Delta}_{\mathrm{test}}(\mathcal{A};\mathcal{W}_G)\) and
+\(\widehat{\Delta}_{\mathrm{nested}}(\mathcal{A};\mathcal{W}_G)\) for those two
+estimates on an antigen subset \(\mathcal{A}\), both evaluated over the same
+grid \(\mathcal{W}_G\) of \(G\) equally spaced weights. The per-draw gap and
+the cell mean plotted in Figure~\ref{fig:selection-bias} are then
+\begin{equation}
+b(\mathcal{A};G) \;=\; \widehat{\Delta}_{\mathrm{test}}(\mathcal{A};\mathcal{W}_G)
+ \;-\; \widehat{\Delta}_{\mathrm{nested}}(\mathcal{A};\mathcal{W}_G),
+\qquad
+\bar{b}(m,G) \;=\; \frac{1}{B_m}\sum_{j=1}^{B_m} b\!\left(\mathcal{A}^{(m)}_j;G\right),
+\label{eq:bias-cell}
+\end{equation}
+In Equation~\ref{eq:bias-cell}, \(\mathcal{A}^{(m)}_1,\dots,\mathcal{A}^{(m)}_{B_m}\) are subsets of size
+\(m\) drawn without replacement from the \(n\) antigens of the split, with
+\(B_m=\BiasReplicates{}\) draws per cell for \(m<n\) and \(B_m=1\) for
+\(m=n\), where exactly one subset exists and the cell is a single
+deterministic evaluation rather than a mean over draws. The two axes of the
+left panel of Figure~\ref{fig:selection-bias} are \(m\) and \(G\), and the
+\(m=n\) column is excluded from the trend for that reason.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_selection_bias.pdf}
+\caption{Left: the mean gap between a weight chosen on the evaluation split
+and one chosen by leave-one-sequence-out selection within it, over
+\BiasReplicates{} draws per cell, by antigen count and weight-grid density.
+Both estimators see the same antigens in every draw. The rightmost point of
+each series is the full split, where only one subset exists; it is a single
+deterministic run rather than a mean, which is why the coarsest grid reaches
+exactly zero there, and it should not be read as part of the trend. Right:
+the break-even routed fraction of
+Equation~\ref{eq:carbon-threshold} as the remote tier is scaled, with the
+policy's own routed fraction marked. The released ESM-2 checkpoints are
+labelled; the ordering reverses between \(35\)M and \(150\)M. Both panels
+are modelled from the recorded constants, not metered.}
+\label{fig:selection-bias}
+\end{figure*}
+
+The bias is positive in every resampled cell and large relative to the
+effects this literature reports (Figure~\ref{fig:selection-bias}, left). On \BiasMetric{}
+it runs from \BiasAtSmallestN{} at
+\BiasSmallestN{} antigens to \BiasAtLargestN{} at \BiasLargestN{}. It grows
+with the density of the parameter grid. At \BiasGridRefN{} antigens a
+\BiasCoarseGridPoints{}-point grid yields \BiasCoarseGridBias{} and a
+\BiasFineGridPoints{}-point grid \BiasFineGridBias{}. A finer scan simply
+offers more chances to fit the evaluation split, which is what one would expect.
+At the grid densities ordinarily used --- weight steps of \(0.05\) are
+common --- the test-derived estimate was the more favourable one in
+\BiasPositiveShareLargestN{}\% of draws. The full-split cell, the one
+deterministic point in this series, reproduces the headline of
+Section~\ref{sec:fusion-results} exactly: at \BiasFullSplitN{} antigens the
+gap is \BiasFullSplitValue{}, which is the difference between the
+\TunedBpThreeDeltaMcc{} that protocol reports and the
+\NestedBpThreeDeltaMcc{} nested cross-validation returns.
+
+That gap is not wholly a selection effect, and it is worth separating before
+it is used. The test-derived figure pools residues into one metric, whereas the
+nested estimate averages per-antigen differences, so the two differ in how they
+aggregate as well as in where the tuning parameters were fitted. Scoring the
+test-derived protocol per antigen, exactly as the nested estimator scores it,
+holds aggregation fixed and isolates selection. Of the
+\DecompHeadlineGap{} \BiasMetric{} headline gap, \DecompSelection{} is
+selection and \DecompAggregation{} is aggregation, so selection accounts for
+\DecompSelectionShare{}\% of it.
+
+The comparison worth drawing is between the selection component and the effects
+it is used to support. Our own earlier analysis had reported a gain of
+\TunedBpThreeDeltaMcc{} \BiasMetric{}. The measured selection component at this
+sample size and grid density is several times larger. A tuned fusion result of
+that magnitude, on a benchmark of this size, therefore carries no information
+about whether fusion helps, because it sits within what the selection rule
+alone produces.
+This is the sense in which the present work generalises beyond one corrected
+analysis. The bias is not an accident of our predictors; it is a property of
+scanning a parameter grid on a small evaluation set, and its size can be estimated in
+advance for any such design.
+
+We are careful about the scope. These magnitudes are specific to these two
+predictors, whose mean rank agreement across cells is \BiasAgreement{}; two
+predictors that agree less would leave more room for a scan to exploit, and
+two that agree more would leave less. What transfers is the construction and
+the direction, not the numbers.
+
 \subsection{What routing buys, and what it costs}
 \label{sec:routing-results}
 
@@ -29,8 +299,12 @@ trade-off, which always-local and always-remote execution cannot.}
 \label{fig:quality-data}
 \end{figure*}
 
+Everything above concerns how a configuration is chosen. The rest of this
+section measures a deployment instead. The question is what routing is worth
+once the freedom to choose after the fact has been removed.
+
 Table~\ref{tab:policy-summary} reports every policy on the BP3C50ID external
-split across \NumSeeds{} seeds, and Table~\ref{tab:paired} gives the paired
+test set across \NumSeeds{} seeds, and Table~\ref{tab:paired} gives the paired
 comparisons that the claims below rest on.
 
 Those five comparisons were fixed before the resampling was run: each contrasts
@@ -40,20 +314,25 @@ intervals for all \PolicyPairsComputed{} orderable pairs of policies on each
 metric, or \QualityIntervalsComputed{} intervals on the four quality metrics
 together. We mark intervals that exclude zero in Table~\ref{tab:paired} as a
 reading aid for those five rows, and no multiplicity correction is applied. A
-reader should not treat the marks as a family-wise claim: across
-\QualityIntervalsComputed{} intervals a handful would fall outside zero under
-a global null, and several of the marked endpoints sit close enough to zero
+reader should not treat the marks as a family-wise claim. No family-wise
+error control is claimed across the \QualityIntervalsComputed{} intervals, and
+we do not quantify one: the intervals are built from the same antigens and the
+same seeds, so they are strongly dependent, and a family-wise rate obtained by
+assuming independence would be a tidier number with nothing behind it. The
+absence of such control is exactly why inference is confined to the five
+pre-specified comparisons and every other interval is reported descriptively.
+Several of the marked endpoints also sit close enough to zero
 that the Monte Carlo error of a \AntigenBootstrapRepeats{}-resample bootstrap
-could move them. We draw no conclusion from any single mark, and the
-conclusions below rest on the size and direction of the differences rather
-than on which intervals happen to exclude zero.
+could move them. We draw no conclusion from any single mark. The
+conclusions below rest on the size and direction of the differences, not on
+which intervals happen to exclude zero.
 
 Two points about those intervals before the results. They are two-way
 bootstrap intervals over antigens and seeds
 (\AntigenBootstrapRepeats{} resamples), not intervals over seeds alone. The
-distinction is not cosmetic: the test split holds the same
-\AntigenCount{} antigens in every seed, so a seed-only interval measures
-how much a number moves when the harness is re-run and says nothing about how
+distinction is not cosmetic. The external test set holds the same
+\AntigenCount{} antigens in every seed. A seed-only interval therefore measures
+how much a number moves when the harness is re-run, and says nothing about how
 it would move on different antigens. On this data seed-only intervals
 are roughly an order of magnitude narrower: local-only MCC is
 \ALocalOnlyMcc{} [\ALocalOnlyMccLo{}, \ALocalOnlyMccHi{}] under antigen
@@ -77,14 +356,14 @@ reduces the fraction of antigens whose raw sequence is transmitted by
 difference could have come out positive: a policy that routes some antigens
 cannot be slower than one that routes all of them, and cannot transmit more
 sequences. These intervals therefore say how large the gain is on other
-antigens, not whether there is one. On quality it differs by
+antigens, not whether there is one. On quality, adaptive-split differs by
 \(\Delta\)MCC \ADAsVsEoMcc{} [\ADAsVsEoMccLo{}, \ADAsVsEoMccHi{}],
 \(\Delta\)ROC-AUC \ADAsVsEoAuc{} [\ADAsVsEoAucLo{}, \ADAsVsEoAucHi{}],
 \(\Delta\)AP \ADAsVsEoAp{} [\ADAsVsEoApLo{}, \ADAsVsEoApHi{}] and \(\Delta\)F1
 \ADAsVsEoFOne{} [\ADAsVsEoFOneLo{}, \ADAsVsEoFOneHi{}]. All four contain zero.
 
-We want to be careful about what that does and does not license. It is not a
-demonstration of equivalence. With \AntigenCount{} antigens the interval on
+We want to be careful about what that does and does not license. Those
+intervals do not demonstrate equivalence. With \AntigenCount{} antigens the interval on
 \(\Delta\)MCC spans roughly \(\pm 0.05\), so a quality loss large enough to
 matter in practice would not be detected here. The defensible statement is that
 routing's quality cost relative to always-remote execution is not resolved at
@@ -108,14 +387,14 @@ on three of four metrics (\(\Delta\)MCC \ADCgVsAsMcc{}
 bought with quality. Within the PLM family, always-remote execution beats
 always-local on ROC-AUC and average precision. PLM routing gives part of
 that back (\(\Delta\)ROC-AUC \ADPasVsPeoAuc{}
-[\ADPasVsPeoAucLo{}, \ADPasVsPeoAucHi{}] against PLM always-remote): in the
+[\ADPasVsPeoAucLo{}, \ADPasVsPeoAucHi{}] against PLM always-remote). In the
 family where the remote model is genuinely stronger, routing's quality cost is
 detectable even here.
 
 Table~\ref{tab:scenarios} reports the robustness axes the harness provides. The
-informative row is the one where the remote tier is unavailable: every
+informative row is the one where the remote tier is unavailable. Every
 adaptive-versus-local difference is then exactly zero, because routing degrades
-to local-only behaviour rather than failing. The grid-intensity axes move
+to local-only behaviour instead of failing. The grid-intensity axes move
 nothing that matters, and the parameter the carbon results are most sensitive
 to --- the embodied amortisation constant --- is not among the available axes
 (Section~\ref{sec:limitations}).
@@ -172,45 +451,77 @@ lands on the unfavourable side.
 Stated this way the result transfers. Equation~\ref{eq:carbon-threshold} says
 routing saves modelled carbon only where the local tier is cheap relative to
 the remote tier \emph{and} the routed fraction stays below
-$1 - C_{\text{local}}/C_{\text{edge}}$. That is the offloading energy threshold
-of \citet{kumar2010cloud} written for this cost model, and our system falls on the
-wrong side of it because per-residue screening on short
+$1 - C_{\text{local}}/C_{\text{edge}}$. The inequality is the offloading energy
+threshold of \citet{kumar2010cloud} written for this cost model. Our system falls on the
+wrong side of it, because per-residue screening on short
 sequences makes the gating pass a large fraction of the work it gates. The
 same inversion has been reported for draft-and-verify decoding cascades
 \citep{dutta2026speculative}. What the measurements contribute is the location
 of the threshold for this task, not the existence of one.
 
-That location, however, is a property of the checkpoint pair rather than of
-the task, and it does not survive a larger remote tier. In the recorded cost
+That location, however, is a property of the checkpoint pair, not of
+the task. It does not survive a larger remote tier. In the recorded cost
 model the embodied charge dominates: operational cost is
-\ScaleOperationalShareEdge{}\% of the remote total, and the embodied term is
+\ScaleOperationalShareEdge{}\% of the remote total, while the embodied term is
 levied per request and does not grow with model size. Scaling the remote model
-therefore grows a term that starts small, and
-Equation~\ref{eq:carbon-threshold} moves only once it becomes comparable to
-the embodied charge. Taking operational cost to scale with parameter count at
-fixed sequence length (Figure~\ref{fig:selection-bias}, right), the break-even
-fraction rises from
+therefore grows a term that starts small. Only once that term becomes
+comparable to the embodied charge does
+Equation~\ref{eq:carbon-threshold} move. Take operational cost to scale with
+parameter count at fixed sequence length (Figure~\ref{fig:selection-bias},
+right). The break-even fraction then rises from
 \ScaleBreakEvenMeasured{} at the \(8\)M remote tier measured here to
 \ScaleSmallBreakEven{} at \(35\)M, \ScaleMidBreakEven{} at \(150\)M and
-\ScaleLargeBreakEven{} at \(650\)M. Solving for the crossing exactly, the
-ordering reverses once the remote call costs
-\ScaleCrossoverFactor{}\(\times\) the one measured here, which is a remote
-model of roughly \ScaleCrossoverParams{}M parameters at this local scale.
+\ScaleLargeBreakEven{} at \(650\)M. Under that scaling assumption the remote
+cost per request splits into a fixed embodied charge \(E\), levied once per
+request and independent of model size, and an operational charge that grows
+with remote parameter count by a factor \(k\) normalised so that \(k=1\) at
+the tier measured here:
+\begin{equation}
+C_{\text{edge}}(k) \;=\; E + k\,O,
+\qquad E \;=\; C_{\text{edge}}(1) - O,
+\label{eq:carbon-scaling}
+\end{equation}
+with \(O>0\) the measured operational charge per remote request. Routing ties
+always-remote execution when \(C_{\text{adaptive}} = C_{\text{edge}}(k)\),
+which by Equation~\ref{eq:carbon-identity} is
+\(C_{\text{local}} = (1-r)\,C_{\text{edge}}(k)\): the local pass must cost
+exactly the unrouted share of a remote call. Substituting
+Equation~\ref{eq:carbon-scaling} and solving for \(k\) gives the crossover in
+closed form,
+\begin{equation}
+k^{\star} \;=\; \frac{1}{O}\left(\frac{C_{\text{local}}}{1-r} \;-\; E\right).
+\label{eq:carbon-crossover}
+\end{equation}
+Because \(O>0\), \(C_{\text{edge}}(k)\) increases strictly with \(k\) and so
+does the break-even fraction
+\(r^{\star}(k) = 1 - C_{\text{local}}/C_{\text{edge}}(k)\) of
+Equation~\ref{eq:carbon-threshold}; since \(r^{\star}(k^{\star})=r\) by
+construction, the routing condition \(r>r^{\star}(k)\) holds exactly for
+\(k<k^{\star}\) and fails above it. On the recorded constants
+Equation~\ref{eq:carbon-crossover} gives
+\(k^{\star}=\ScaleCrossoverFactor{}\): the ordering reverses once the
+remote tier's \emph{operational} charge reaches \ScaleCrossoverFactor{}\(\times\)
+the one measured here, a remote model of roughly \ScaleCrossoverParams{}M
+parameters at this local scale. Because the embodied term is held fixed in
+Equation~\ref{eq:carbon-scaling} and the operational charge is only
+\ScaleOperationalShareEdge{}\% of the remote total, that is a far smaller
+change in the cost of a remote call than in \(k\) itself.
 
-This matters for the claim rather than for the arithmetic. BepiPred-3.0, the
-reference predictor a laboratory would actually call remotely, is built on
-ESM-2 650M --- five times past that crossing. Against a remote tier of that
+This matters for the claim, not for the arithmetic. BepiPred-3.0 is the
+reference predictor a laboratory would actually call remotely, and it is built
+on ESM-2 650M, several times the \ScaleCrossoverParams{}M at which the
+ordering turns. Against a remote tier of that
 size the policy's routed fraction of \AdaptiveSplitRouteRate{} sits well below
-the break-even, and routing becomes the \emph{less} carbon-intensive choice,
-not the more. We therefore state the carbon result conditionally: routing is
+the break-even. Routing becomes the \emph{less} carbon-intensive choice,
+not the more. We therefore state the carbon result conditionally. Routing is
 the most carbon-intensive policy of those compared \emph{for the checkpoint
-pair measured here}, and the finding that transfers is
-Equation~\ref{eq:carbon-threshold} together with the observation that a
+pair measured here}. The finding that transfers is
+Equation~\ref{eq:carbon-threshold}, together with the observation that a
 gate is only worth its carbon when what it gates is substantially more
 expensive than the gate. Our own pairing, an \(8\)M local model against an
-\(8\)M remote one, is close to the worst case for that condition. The
-sensitivity is modelled on the recorded constants, not metered, like the
-carbon figures it extends.
+\(8\)M remote one, is close to the worst case for that condition. Like the
+carbon figures it extends, the sensitivity is modelled on the recorded
+constants, not metered.
 
 The carbon-guard policy, which exists precisely to suppress unprofitable
 routing, does reduce carbon to \CarbonGuardCarbon{} --- essentially
@@ -225,244 +536,10 @@ mostly turns routing off.
 Within the PLM family the pattern is similar but compressed, and one component
 turns out to do nothing. The conformal-guard policy produces per-seed metrics
 identical to PLM adaptive-split on every metric we record, to the precision
-stored in the artifacts: the conformal criterion never changed a routing
-decision on this split. We report it as a null component rather than omitting
-it. The region-constrained post-processor, by contrast, is the one PLM addition
+stored in the artifacts, because the conformal criterion never changed a
+routing decision on this split. We report it as a null component instead of
+omitting it. The region-constrained post-processor, by contrast, is the one PLM addition
 that helps, improving on PLM local-only by \(\Delta\)MCC \DPreVsPloMcc{}
 [\DPreVsPloMccLo{}, \DPreVsPloMccHi{}] at no latency cost relative to PLM
 edge-only.
 
-\subsection{Reproducing the previously reported fusion advantage}
-\label{sec:replication}
-
-Before re-estimating the fusion effect we checked that any change could be
-attributed to the protocol rather than to our reimplementation. The
-original selection rule blends raw scores, scans the weight grid on the
-evaluation split, and sets the threshold to preserve the reference predictor's
-positive-call count on that split. Run through the loaders and metric code used
-throughout this paper, it reproduces the earlier analysis. All
-\TunedBpThreeReplicationRows{} entries of its stored weight-sensitivity grid
-agree to within \TunedBpThreeReplicationMaxDiff{}, inside the
-\TunedBpThreeReplicationTolerance{} tolerance the check applies and consistent
-with the precision at which that grid was rounded. The procedure independently
-selects the same optimum, \(w=\TunedBpThreeWeight{}\), and the same
-positive-call count of \TunedBpThreePositiveCalls{}. This comparison is
-executed by the replication script and its outcome recorded in the artifact
-(status: \TunedBpThreeReplicationStatus{}) rather than asserted here.
-Differences between the two protocols below are therefore attributable to how
-the configuration is chosen rather than to a difference in implementation.
-
-\subsection{The fusion advantage does not survive nested selection}
-\label{sec:fusion-results}
-
-
-\input{tables/tab_fusion}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig_fusion_forest.pdf}
-\caption{The fusion effect against the reference predictor under two selection
-protocols. Blue intervals are mean per-antigen differences with 95\% bootstrap
-intervals under leave-one-sequence-out nested selection; orange squares are the
-corresponding estimates when the weight and threshold are chosen on the
-evaluation split. On both datasets the nested interval contains zero while the
-test-derived estimate sits above it.}
-\label{fig:fusion-forest}
-\end{figure*}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig_per_sequence.pdf}
-\caption{Per-antigen change in ROC-AUC from fusion under nested selection,
-ordered by effect. The dispersion, particularly on the IEDB subset, is much
-larger than the mean effect in either direction.}
-\label{fig:per-sequence}
-\end{figure*}
-
-Table~\ref{tab:fusion} and Figure~\ref{fig:fusion-forest} give both protocols on
-both datasets.
-
-On BP3C50ID, nested selection leaves a mean per-antigen difference against
-BepiPred-3.0 of \NestedBpThreeDeltaAuc{} ROC-AUC
-[\NestedBpThreeDeltaAucLo{}, \NestedBpThreeDeltaAucHi{}], with
-\NestedBpThreeWinsAuc{} of \NestedBpThreeSequences{} antigens improving and a
-Wilcoxon $p$ of \NestedBpThreePAuc{}. MCC behaves the same way
-(\NestedBpThreeDeltaMcc{} [\NestedBpThreeDeltaMccLo{}, \NestedBpThreeDeltaMccHi{}],
-$p=\NestedBpThreePMcc{}$).
-
-The larger IEDB subset behaves the same way, with one important difference in
-what it tests. We have no BepiPred-3.0 predictions for those antigens, so that
-arm fuses the candidate with our own local-only predictor rather than with
-BepiPred-3.0. It is a second instance of the same selection question, not a
-replication of the same comparison, and we do not read it as independent
-confirmation of the BepiPred-3.0 result. The mean per-antigen
-difference in ROC-AUC is \NestedIedbDeltaAuc{}
-[\NestedIedbDeltaAucLo{}, \NestedIedbDeltaAucHi{}], with
-\NestedIedbWinsAuc{} of \NestedIedbSequences{} antigens improving
-($p=\NestedIedbPAuc{}$), and MCC gives \NestedIedbDeltaMcc{}
-[\NestedIedbDeltaMccLo{}, \NestedIedbDeltaMccHi{}]. Every interval on both
-datasets contains zero. Both the Wilcoxon test and the sign test discard
-antigens whose paired difference is exactly zero; on BP3C50ID this removes
-\NestedBpThreeTiesAuc{} antigens for ROC-AUC and \NestedBpThreeTiesMcc{} for
-MCC, and on the IEDB subset \NestedIedbTiesAuc{} and \NestedIedbTiesMcc{}, so
-the effective sample size is smaller than the stated number of antigens by
-that count.
-
-We are careful about what these nulls support. An interval containing zero is
-not evidence that the effect is zero, and at these sample sizes the paired
-design cannot resolve effects of the size at issue. With the observed
-per-antigen dispersion, the smallest difference BP3C50ID could detect with
-80\% power at a two-sided 5\% level is \NestedBpThreeMdeMcc{} in MCC and
-\NestedBpThreeMdeAuc{} in ROC-AUC; on the IEDB subset the corresponding
-figures are \NestedIedbMdeMcc{} and \NestedIedbMdeAuc{}. The MCC effect the
-test-derived protocol reports, \TunedBpThreeDeltaMcc{}, is far below what the
-nested analysis could have detected. A non-significant nested result was close
-to guaranteed, so it carries little evidential weight against that specific
-effect.
-
-What the design does identify is the behaviour of the estimator. Under the
-test-derived protocol the same BP3C50ID data yield \TunedBpThreeDeltaMcc{} MCC
-and \TunedBpThreeDeltaAuc{} ROC-AUC in favour of fusion; under nested
-selection the same quantity on the same data is \NestedBpThreeDeltaMcc{} and
-\NestedBpThreeDeltaAuc{}. The point estimate does not shrink towards zero, it
-changes sign. That is a statement about how much the selection step moves the
-estimate, which this comparison does identify, rather than a statement about
-the underlying effect, which it does not. The defensible conclusion is that
-the test-derived estimate is biased by at least the distance between the two,
-not that fusion does not help.
-
-Figure~\ref{fig:per-sequence} shows the per-antigen differences behind these
-means. The dispersion is far larger than the mean in both directions. That is
-what a null effect over a small number of antigens looks like, and it is the
-reason we report the paired tests rather than a pooled number alone.
-
-\subsection{How often the published literature selects this way}
-\label{sec:survey}
-
-The result above is a correction to our own unpublished analysis, which bounds
-how much it matters. To ask whether the practice is confined to us, we
-surveyed published B-cell epitope predictors that combine two or more models
---- score fusion, ensembles, stacking, consensus voting --- and asked of each
-whether the combination parameter was chosen using the same data the headline
-performance is reported on. The survey covers
-\SurveyAssessed{} assessable papers and records, for every one, the verbatim
-sentence the judgement rests on; it is released with the code.
-
-We keep three categories apart. \SurveyLeakage{} papers are \emph{leakage
-evident}: the text states that a mixing weight, a voting rule, an ensemble
-composition or a reported configuration was chosen by inspecting performance
-on the evaluation data. \SurveyClean{} are \emph{leakage-free evident}: a
-validation split, the training set, or a rule fixed a priori.
-\SurveyUnreported{} are \emph{unreported}: the paper does not say on which
-data the parameter was chosen. We do not count the third group as leakage. It
-is an observation about what the methods section contains, and its size is
-itself the point --- a quarter of the sample does not let a reader check.
-Among the \SurveyStatingBasis{} papers that do state a basis,
-\SurveyLeakageShare{}\% selected on their own evaluation data.
-
-These counts are not a prevalence estimate and we do not offer them as one.
-The sample is open-access only, reachable by keyword, and skewed towards
-recent and prominent work; paywalled methods papers are structurally absent.
-With \SurveyAssessed{} papers each count carries a sampling error of one or
-two. What the survey does establish is that the selection step we found in our
-own work is present in the published literature, that it is not rare among
-papers that disclose enough to tell, and that a substantial minority of papers
-disclose too little for the question to be asked at all. The magnitude such a
-step can reach is the subject of the next section.
-
-\subsection{How large the selection step is, and what governs it}
-\label{sec:bias-curve}
-
-The sections above establish that the selection step moved our estimate and
-that the practice occurs in print. Neither says how large an effect a reader
-should expect it to produce. That is answerable from the same data by
-resampling.
-
-For a given antigen count and weight grid we draw a subset without
-replacement, estimate the fused-minus-reference difference on it twice, and
-record the gap. The first estimate scans the grid on the subset and keeps the
-best row, which is the protocol a paper follows when it reports a tuned
-combination parameter without holding anything out. The second applies
-leave-one-sequence-out selection inside the same subset. Both estimators see
-exactly the same antigens, so the gap is attributable to the selection rule
-rather than to which data were drawn. We average over \BiasReplicates{} draws
-per cell.
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig_selection_bias.pdf}
-\caption{Left: the mean gap between a weight chosen on the evaluation split
-and one chosen by leave-one-sequence-out selection within it, over
-\BiasReplicates{} draws per cell, by antigen count and weight-grid density.
-Both estimators see the same antigens in every draw. The rightmost point of
-each series is the full split, where only one subset exists; it is a single
-deterministic run rather than a mean, which is why the coarsest grid reaches
-exactly zero there, and it should not be read as part of the trend. Right:
-the break-even routed fraction of
-Equation~\ref{eq:carbon-threshold} as the remote tier is scaled, with the
-policy's own routed fraction marked. The released ESM-2 checkpoints are
-labelled; the ordering reverses between \(35\)M and \(150\)M. Both panels
-are modelled from the recorded constants, not metered.}
-\label{fig:selection-bias}
-\end{figure*}
-
-The bias is positive everywhere and large relative to the effects this
-literature reports (Figure~\ref{fig:selection-bias}, left). On \BiasMetric{}
-it runs from \BiasAtSmallestN{} at
-\BiasSmallestN{} antigens to \BiasAtLargestN{} at \BiasLargestN{}. It grows
-with the density of the grid: at \BiasGridRefN{} antigens a
-\BiasCoarseGridPoints{}-point grid yields \BiasCoarseGridBias{} and a
-\BiasFineGridPoints{}-point grid \BiasFineGridBias{}, which is what one would
-expect if a finer scan simply offers more chances to fit the evaluation split.
-At the grid densities ordinarily used --- weight steps of \(0.05\) are
-common --- the test-derived estimate was the more favourable one in
-\BiasPositiveShareLargestN{}\% of draws. The full-split cell reproduces the
-headline of Section~\ref{sec:fusion-results} exactly, at
-\BiasAtLargestN{}, which is the difference between the
-\TunedBpThreeDeltaMcc{} that protocol reports and the
-\NestedBpThreeDeltaMcc{} nested selection returns.
-
-The comparison worth drawing is between that bias and the effects it is used
-to support. Our own earlier analysis reported a gain of
-\TunedBpThreeDeltaMcc{} \BiasMetric{}. The expected bias at that sample size
-and grid density is several times larger. A tuned fusion result of that
-magnitude, on a benchmark of this size, therefore carries no information about
-whether fusion helps: it is within what the selection rule alone produces.
-This is the sense in which the present work generalises beyond one corrected
-analysis. The bias is not an accident of our predictors; it is a property of
-scanning a grid on a small evaluation set, and its size can be estimated in
-advance for any such design.
-
-We are careful about the scope. These magnitudes are specific to these two
-predictors, whose mean rank agreement across cells is \BiasAgreement{}; two
-predictors that agree less would leave more room for a scan to exploit, and
-two that agree more would leave less. What transfers is the construction and
-the direction, not the numbers.
-
-\subsection{Which predictor the procedure prefers}
-\label{sec:weight-transfer}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig_weight_stability.pdf}
-\caption{The fusion weight selected in each training fold, by dataset, with
-medians marked. Both datasets place almost all of the weight on the reference
-predictor, which is the same conclusion the null effect reaches by a different
-route.}
-\label{fig:weight-stability}
-\end{figure*}
-
-Figure~\ref{fig:weight-stability} plots the weight chosen in each training fold.
-On BP3C50ID the folds settle around a median of \NestedBpThreeWeightMedian{}
-(range \NestedBpThreeWeightMin{} to \NestedBpThreeWeightMax{}); on the IEDB
-subset the median is \NestedIedbWeightMedian{} (range \NestedIedbWeightMin{} to
-\NestedIedbWeightMax{}). Both sit close to the upper end of the grid, meaning
-the selection procedure chooses to give our predictor almost no influence over
-the blended score.
-
-The selected weights are an independent route to the same
-conclusion. The nested evaluation says the blend cannot be distinguished from
-the reference predictor. The selected weights say why: the
-procedure, given a free choice, declines to use the second predictor. A fusion
-whose fitted weight approaches one is not a combination of two models but the
-stronger model with extra machinery attached.

@@ -43,10 +43,10 @@ step.
 \paragraph{The remote tier is co-located, not remote.} The latency figures
 attribute a transport cost to routed antigens, but the benchmark executes both
 tiers on one machine, and the two-node transport evidence in the artifact is an
-HTTP probe rather than a deployed remote model server. Real deployments would
+HTTP probe, not a deployed remote model server. Real deployments would
 add network variance, queueing and failure modes that
 this harness does not model. For latency and for transmitted volume these
-would, if anything, favour routing rather than count against it, since
+would, if anything, favour routing, not count against it, since
 always-remote execution pays the network on every antigen and routing pays it
 on roughly a quarter. What a real deployment would add against routing is of a
 different kind: a dependency on the remote tier for exactly the antigens the
@@ -64,8 +64,8 @@ interval on the adaptive-split versus always-remote MCC difference spans roughly
 $\pm 0.05$, which would not exclude a quality loss a practitioner would care
 about. For the fusion analysis the IEDB subset at \NestedIedbSequences{}
 antigens carries more weight on ROC-AUC and average precision, where it has no
-tied folds. On the thresholded metrics its informative-fold count is closer to
-BP3C50ID's and we do not claim it is better powered there.
+tied folds. On the threshold-dependent metrics its informative-fold count is
+closer to BP3C50ID's and we do not claim it is better powered there.
 
 \paragraph{The language-model tier is the smallest available checkpoint.} The
 PLM results use \texttt{esm2\_t6\_8M\_UR50D}, chosen for the hardware at hand.

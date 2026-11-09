@@ -4,20 +4,21 @@
 \subsection{Datasets}
 \label{sec:datasets}
 
-The primary benchmark is BP3C50ID, the split distributed with BepiPred-3.0, in
-which training and external test antigens are separated at 50\% sequence
-identity. The external test split contains \BepipredNumAntigens{} antigens,
-\BepipredResidues{} residues and \BepipredPositives{} positive residues, a
-positive rate just under one residue in five. All BP3C50ID results below are on
-this external split; no model or policy parameter is fitted on it.
+The primary benchmark is BP3C50ID, the non-redundant split distributed with
+BepiPred-3.0, in which training and external test antigens are separated at a
+50\% sequence identity threshold. The external test split contains \BepipredNumAntigens{} antigens,
+\BepipredResidues{} residues and \BepipredPositives{} positive residues, an
+epitope-residue rate just under one residue in five. All BP3C50ID results below
+are on this independent benchmark; no model or policy parameter is fitted on
+it.
 
 A second evaluation uses a subset derived from the Immune Epitope Database
 \citep{vita2024iedb}, holding \IedbSubsetTest{} test antigens
 (\NestedIedbResidues{} residues, \NestedIedbPositives{} positive) alongside
-\IedbSubsetTrain{} training antigens. It is drawn from the
+\IedbSubsetTrain{} training antigens. The subset is drawn from the
 \texttt{\IedbSourceFile{}} collection distributed alongside BP3C50ID, which
 holds \IedbSourceSequences{} IEDB sequences selected not to share more than
-20\% identity with the BP3 data, and is then restricted to sequences of
+20\% sequence identity with the BP3 data, and is then restricted to sequences of
 \IedbLengthMin{}--\IedbLengthMax{} residues so that the full policy grid remains
 runnable on a workstation. Every sequence in the subset is present verbatim in
 that source collection.
@@ -28,15 +29,15 @@ to be genuinely independent. Independence holds by construction through the
 identity filter. We also tested it directly against all
 \IedbBpThreeCompared{} BP3C50ID sequences and found \IedbIdOverlap{} shared
 identifiers, \IedbExactOverlap{} shared sequences, and a maximum
-\IedbKmerSize{}-mer containment of \IedbMaxContainment{}. That containment
-means no antigen in the subset shares even a single \IedbKmerSize{}-residue run
-with any BP3C50ID antigen.
+\IedbKmerSize{}-mer containment of \IedbMaxContainment{}. No antigen in the
+subset therefore shares even a single \IedbKmerSize{}-residue run with any
+BP3C50ID antigen.
 
 \subsection{Predictors}
 \label{sec:predictors}
 
-Two families of local and remote predictor are evaluated, and the distinction
-between them is held fixed across every policy.
+We evaluate two families of local and remote predictor of conformational B-cell
+epitopes, and hold the distinction between them fixed across every policy.
 
 The \emph{heuristic family} uses handcrafted per-residue sequence-context
 features. Its local member is a lightweight residue classifier; its remote
@@ -51,8 +52,8 @@ the remote member adds contact-derived features and the same trees refiner.
 A region-constrained variant post-processes the remote probabilities into
 contiguous regions using contact density, with the region parameters selected on
 validation data. We use the 8M-parameter checkpoint because it is what runs on
-the hardware available for this study. It is the smallest of the released ESM-2
-models. The PLM results here should therefore be read as a lower bound on what
+the hardware available for this study. That checkpoint is the smallest of the released
+ESM-2 models. The PLM results here should therefore be read as a lower bound on what
 the family can do, not as a characterisation of language-model-based epitope
 prediction in general.
 
@@ -103,10 +104,10 @@ converts that with a grid-intensity constant of
 amortisation of a device lifetime figure. The local device is modelled at
 \SI{34}{\watt} and the remote at \SI{145}{\watt}.
 
-The embodied term also carries a device-utilisation fraction, applied
+The embodied term also carries a device-utilisation fraction. We apply it
 so that a request is charged only the share of the device's lifetime footprint
 it actually occupies: \CarbonLocalFraction{} locally and \CarbonEdgeFraction{}
-remotely. These reduce the per-request embodied charge from
+remotely. The two fractions reduce the per-request embodied charge from
 \EmbodiedDeclaredLocal{} to \EmbodiedEffectiveLocal{}~gCO\textsubscript{2}e
 locally and from \EmbodiedDeclaredEdge{} to \EmbodiedEffectiveEdge{} remotely.
 We state them explicitly because they are the single largest determinant of
@@ -138,7 +139,7 @@ says nothing about how the number would move on different antigens, which is
 what a reader wants to know. Our primary analysis therefore resamples both.
 For each of \AntigenBootstrapRepeats{} replicates we draw \AntigenCount{}
 antigens with replacement and \NumSeeds{} seeds with replacement, recompute
-every policy's pooled residue-level metrics on that resampled set, and take
+every policy's pooled residue-level metrics on that resampled set. We take
 the 2.5th and 97.5th percentiles of the resulting distribution as a 95\%
 interval. One antigen draw is shared across all policies within a replicate,
 so paired differences stay paired. Intervals are percentile intervals, with no
@@ -147,7 +148,7 @@ seed recorded in the released artifact.
 
 We report seed-only intervals alongside these in Section~\ref{sec:results}
 only to show how different the two are; no claim in this paper rests on them,
-and the exact sign test over seeds that an earlier version of this work relied
+and the exact sign test over seeds that an earlier version of this work had relied
 on is not used.
 
 Two cautions apply to how we read these intervals. First, with
@@ -156,7 +157,7 @@ under-cover for non-linear statistics such as MCC and ROC-AUC, so the
 intervals should be read as indicative rather than exact. Second, several of
 the quantities we report are not random in sign. A policy that routes only
 some antigens cannot be slower than one that routes all of them, and cannot
-transmit more sequences, so for latency and disclosure the interval describes
+transmit more sequences. For latency and disclosure the interval therefore describes
 the magnitude of a difference whose direction is fixed by construction.
 Reporting that such an interval excludes zero would assert nothing. We say so
 where it applies, and we reserve the language of detection for the quality
@@ -168,14 +169,14 @@ such a comparison as a trend.
 \label{sec:fusion-protocol}
 
 Score fusion combines the reference predictor's per-residue score with ours
-(CARBON-BCE-R, the local-only predictor) as
-a convex blend governed by a weight \(w\). The two predictors are calibrated
+(CARBON-BCE-R, the local-only predictor) into a meta-predictor,
+a convex blend governed by a mixing weight \(w\). The two predictors are calibrated
 differently, so a blend of their raw outputs would be dominated by whichever
 has the wider spread. We therefore map each onto \([0,1]\) through its own
-empirical distribution function before blending. That distribution is estimated
-on the training folds and applied to the held-out fold, like any other fitted
-transform; it is not a rank transform computed over the whole split, which
-would let held-out residues influence their own normalisation. One consequence is worth
+empirical distribution function before blending. We estimate that distribution
+on the training folds and apply it to the held-out fold, like any other fitted
+transform. The mapping is not a rank transform computed over the whole split,
+which would let held-out residues influence their own normalisation. One consequence is worth
 stating, because it is easy to assume otherwise. A transform fitted on training
 data is not exactly
 rank-preserving on held-out data, so a fold's ROC-AUC after mapping can differ
@@ -183,30 +184,127 @@ slightly from the same predictor's raw ROC-AUC. The effect is small, under
 \(10^{-3}\) per fold in our runs, but it is not zero. For this reason we report
 per-fold paired differences rather than pooled ranking metrics. A decision
 threshold then converts
-blended scores into calls. Both \(w\) and the threshold are free parameters.
+blended scores into calls. Both \(w\) and the threshold are tuning parameters.
 The whole question is where they come from.
 
-\paragraph{Test-derived selection.} The protocol used in the earlier version of
-this work evaluates a grid of weights on the evaluation split, reports the row
-that scores best, and sets the threshold so the blended predictor emits the same
-number of positive calls that the reference predictor emits \emph{on that same
-split}. Both quantities are thus functions of the test labels.
+\paragraph{Notation.} Let \(\mathcal{A}\) be the set of \(n\) test antigens,
+\(R_a\) the residues of antigen \(a\), and \(y_{a,i}\in\{0,1\}\) the epitope
+label of residue \(i\in R_a\). Each residue carries two raw scores:
+\(r_{a,i}\) from the reference predictor and \(c_{a,i}\) from ours. For a set
+of antigens \(T\subseteq\mathcal{A}\), let \(\hat{F}^{\mathrm{ref}}_{T}\) and
+\(\hat{F}^{\mathrm{cand}}_{T}\) be the empirical distribution functions of the
+two raw score sets over the residues of \(T\) alone. The blended score of
+residue \(i\) of antigen \(a\) at weight \(w\), normalised through \(T\), is
+\begin{equation}
+\label{eq:blend}
+s_{a,i}(w,T) \;=\; w\,\hat{F}^{\mathrm{ref}}_{T}\!\bigl(r_{a,i}\bigr)
+\;+\;(1-w)\,\hat{F}^{\mathrm{cand}}_{T}\!\bigl(c_{a,i}\bigr),
+\qquad w\in\mathcal{W}\subset[0,1],
+\end{equation}
+so that \(w\) is the weight on the \emph{reference} predictor and \(1-w\) the
+weight on ours; \(\mathcal{W}\) is the finite grid of candidate weights that is
+scanned. We write \(s_{T}(w,U)\) for the vector of \(s_{a,i}(w,U)\) over the
+residues of all antigens in \(T\), and \(y_{T}\) for the corresponding labels.
 
-\paragraph{Nested selection.} Antigens are the unit of resampling. For each
-held-out antigen in turn, the weight is chosen from the same grid and the
-threshold is fitted as a value on the training folds' blended scores; both are
-then applied, unchanged, to the held-out antigen. The operating point is the
-positive-call rate the reference predictor produces at its own published
-threshold, recomputed on each training split. Nothing derived from the
+The threshold is not a free scalar either. For a score vector \(s\) and a
+target positive-call rate \(\rho\),
+\begin{equation}
+\label{eq:rate-threshold}
+\tau(s,\rho)\;=\;s_{(k)},\qquad k=\operatorname{round}\!\bigl(\rho\,\lvert s\rvert\bigr),
+\end{equation}
+the \(k\)-th largest entry of \(s\): the operating point is a constrained
+quantile, chosen so the blend emits the same number of positive calls as the
+reference. We write \(\rho_{T}\) for the positive-call rate the reference
+predictor produces at its own published threshold on the residues of \(T\), and
+\(\widehat{M}(y,s,\tau)\) for the empirical selection metric of scores \(s\) against labels \(y\)
+at operating point \(\tau\). The two protocols below use exactly these objects
+and differ only in which data the maximisation in \(w\), the distribution
+functions, and the threshold are allowed to see.
+
+\paragraph{Test-derived selection.} The protocol used in the earlier version of
+this work optimizes both tuning parameters on the evaluation split, reporting
+\begin{equation}
+\label{eq:test-derived}
+\widehat{\Delta}_{\mathrm{test}}
+=\max_{w\in\mathcal{W}}
+\widehat{M}\!\Bigl(y_{\mathcal{A}},\,s_{\mathcal{A}}(w,\mathcal{A}),\,
+\tau\bigl(s_{\mathcal{A}}(w,\mathcal{A}),\rho_{\mathcal{A}}\bigr)\Bigr)
+\;-\;
+\widehat{M}\!\Bigl(y_{\mathcal{A}},\,\hat{F}^{\mathrm{ref}}_{\mathcal{A}}(r),\,
+\tau\bigl(\hat{F}^{\mathrm{ref}}_{\mathcal{A}}(r),\rho_{\mathcal{A}}\bigr)\Bigr).
+\end{equation}
+Every argument on the right-hand side is the whole evaluation split: the grid
+maximum, the normalisation and the threshold all see \(y_{\mathcal{A}}\). Both
+tuning parameters are thus functions of the test labels, and the margin the
+protocol reports over the stronger single predictor is an over-optimistic
+estimate.
+
+\paragraph{Nested selection.} The corrected protocol is nested
+cross-validation with the antigen as the unit of resampling. The outer loop
+leaves out one antigen at a time, so that \(T_a=\mathcal{A}\setminus\{a\}\)
+carries every quantity fitted for fold \(a\):
+\begin{align}
+w_a &= \operatorname*{arg\,max}_{w\in\mathcal{W}}
+ \widehat{M}\!\Bigl(y_{T_a},\,s_{T_a}(w,T_a),\,
+ \tau\bigl(s_{T_a}(w,T_a),\rho_{T_a}\bigr)\Bigr), \label{eq:inner-selection}\\
+\tau_a &= \tau\bigl(s_{T_a}(w_a,T_a),\,\rho_{T_a}\bigr). \label{eq:fold-threshold}
+\end{align}
+The inner loop \eqref{eq:inner-selection} scores the same parameter grid on the
+training folds of that fold; it is a grid scan over those folds, evaluated on
+the very residues it is fitted on, not a further resampling split inside them.
+The weight and the threshold \eqref{eq:fold-threshold} are then applied,
+unchanged, to the held-out antigen, and the outer estimate is the mean of the
+per-antigen paired differences,
+\begin{equation}
+\label{eq:nested}
+\widehat{\Delta}_{\mathrm{nested}}
+=\frac{1}{n}\sum_{a\in\mathcal{A}}
+\Bigl[\,
+\widehat{M}\!\bigl(y_a,\,s_a(w_a,T_a),\,\tau_a\bigr)
+-\widehat{M}\!\Bigl(y_a,\,\hat{F}^{\mathrm{ref}}_{T_a}(r_a),\,
+\tau\bigl(\hat{F}^{\mathrm{ref}}_{T_a}(r_{T_a}),\rho_{T_a}\bigr)\Bigr)
+\Bigr].
+\end{equation}
+Comparing \eqref{eq:nested} with \eqref{eq:test-derived}: the metric, the
+blend and the threshold rule \eqref{eq:rate-threshold} are the same functions; only the subscript on the
+data they are evaluated with has changed. Nothing derived from the
 held-out antigen enters the configuration applied to it: not its labels, not its
-score distribution, not its own quantiles. That is what makes the resulting
-predictor deployable, since it needs no knowledge of a new antigen before
-scoring its first residue. This yields one out-of-fold
-prediction per antigen with no test label having influenced the configuration
-applied to it. We report the mean per-antigen difference against the reference
-predictor with a 95\% bootstrap interval over antigens, a Wilcoxon signed-rank
-test and an exact sign test, and we report the weight chosen in every fold
-rather than only its median.
+score distribution, not its own quantiles. Independence of that kind is what makes the
+resulting predictor deployable, since it needs no knowledge of a new antigen
+before scoring its first residue. We report
+\(\widehat{\Delta}_{\mathrm{nested}}\) with a 95\% bootstrap interval over
+antigens, a Wilcoxon signed-rank test and an exact sign test. We also report
+the weight \(w_a\) chosen in every fold, not its median alone.
+
+\paragraph{What nested selection does and does not buy.} The property that
+holds is an independence one. \emph{Claim:} given the data of \(T_a\), the
+out-of-fold scores and calls for antigen \(a\) in \eqref{eq:nested} are fixed
+functions of that antigen's own inputs, and in particular do not depend on
+\(y_a\). \emph{Proof:} by \eqref{eq:inner-selection} and
+\eqref{eq:fold-threshold}, \(w_a\), \(\tau_a\),
+\(\hat{F}^{\mathrm{ref}}_{T_a}\) and \(\hat{F}^{\mathrm{cand}}_{T_a}\) are
+functions of \((r,c,y)\) restricted to \(T_a\); substituting them into
+\eqref{eq:blend} makes \(s_{a,i}(w_a,T_a)\) a function of \((r_{a,i},c_{a,i})\)
+and those four quantities only, and the call is
+\(\mathbf{1}[s_{a,i}(w_a,T_a)\ge\tau_a]\). So \(y_a\) enters \eqref{eq:nested}
+only through \(M\), as the labels that already-fixed predictions are scored
+against. The single assumption is the one the design enforces: folds are
+defined by antigen, so no residue of \(a\) belongs to \(T_a\).
+
+What that licenses is reading \eqref{eq:nested} as an estimate of the
+performance of the selection \emph{procedure} on an antigen it has not seen.
+What it does not license is calling \(\widehat{\Delta}_{\mathrm{nested}}\) an
+unbiased estimate of that performance, and we do not claim it is, for two
+reasons. First, the inner selection \eqref{eq:inner-selection} is
+resubstitution: the metric is maximised on the same training residues at the
+threshold fitted on those residues, so \(w_a\) is itself the argmax of a noisy
+in-sample score, and \eqref{eq:nested} inherits whatever optimism that choice
+carries into the held-out fold. Second, any two folds share \(n-2\) antigens,
+so the per-antigen differences in \eqref{eq:nested} are not independent; the
+spread of the leave-one-out mean is smaller than independent folds would give,
+which is why the percentile interval over folds under-covers rather than
+attaining its nominal level. The nested number is the better of the two
+estimates on offer, not a guaranteed-unbiased one.
 
 Both protocols are implemented in the same module against the same loaders and
 metric code, so that a difference between their outputs is attributable to the

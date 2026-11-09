@@ -1,17 +1,18 @@
 \section{Introduction}
 \label{sec:introduction}
 
-A laboratory that has just expressed a new antigen and wants to know where its
-surface-exposed B-cell epitopes are has good computational options, and a
-practical problem in using them. The best current conformational predictors are built on
-protein language models whose weights run to billions of parameters
+A laboratory that has just expressed a new antigen and wants to know which of
+its residues belong to conformational B-cell epitopes has good
+computational options, and a practical problem in using them. The best current
+conformational predictors are built on protein language models whose weights
+run to billions of parameters
 \citep{lin2023esm}. Running one well needs either a workstation with a capable
 accelerator or, far more commonly, uploading the sequence to a hosted service.
 Neither is comfortable for every group, and accelerators are unevenly
 distributed.
 For antigens from unpublished constructs, from clinical isolates, or from an
 industrial pipeline, the sequence itself is the sensitive object: sending it to
-a third-party endpoint is a disclosure decision rather than a technical one.
+a third-party endpoint is a disclosure decision, not a technical one.
 
 The obvious middle path is to keep a small model on the local machine and call
 the remote service only when the local model is unsure. Systems research has
@@ -24,78 +25,92 @@ quantities at once: how good the predictions are, how long screening takes, and
 how much sequence leaves the building. We measure all three on the same runs
 rather than arguing them separately.
 
-We build a measurement harness that
+Quality is the first of the three, and it is the one most easily overstated.
+The paper re-examines an earlier unpublished analysis of our own, which
+had reported that score fusion, blending the per-residue scores of our local
+predictor with those of BepiPred-3.0 \citep{clifford2022bepipred}, improved on
+BepiPred-3.0 alone. Two tuning parameters govern that blend, the mixing weight
+and the decision threshold, and the earlier analysis had fixed both by scoring
+a parameter grid on the evaluation split and keeping the best-scoring row.
+\citet{kapoor2023leakage} identify such optimization of thresholds on
+evaluation data as the most common form of leakage in applied machine learning.
+The step is easy to commit, because a sensitivity analysis and a parameter
+selection procedure look superficially alike. We reproduce the original numbers
+under the original protocol, to within \TunedBpThreeReplicationMaxDiff{}. We
+then re-estimate the same quantity under nested cross-validation, with the
+weight and the threshold selected in an inner loop over the training folds
+while antigens are held out one at a time in the outer loop.
+The advantage does not survive on either dataset. On BP3C50ID the difference
+against BepiPred-3.0 is no longer detectable and the MCC estimate changes
+sign. On a larger IEDB-derived subset, which fuses against our own local
+predictor in place of BepiPred-3.0, the difference is likewise indistinguishable
+from zero. On both, the inner loop puts almost all of the weight on the reference
+predictor and almost none on ours. Neither dataset is large enough to
+show that fusion cannot help, and we do not claim that it does not.
+
+The literature this belongs to is accumulating fusion and ensemble results
+faster than it scrutinises how their tuning parameters were chosen. The
+corrective is cheap, since the nested protocol here costs one extra outer loop
+over antigens and needs no new data.
+
+What a routed deployment costs is the remaining question, and it needs the same
+discipline. We build a measurement harness that
 runs a set of routing policies, from always-local through uncertainty-triggered
 routing to always-remote, on identical inputs with identical seeds. It records
 predictive quality, latency, data movement and an energy model per antigen.
 Over \NumSeeds{} seeds on the BP3C50ID external split, the answer arrives with
-intervals attached: routing on local uncertainty gives up nothing detectable in
-quality against always-remote execution while cutting latency to roughly a
-third and keeping most raw sequences on the device. It also gives an answer
+intervals attached. Routing on local uncertainty gives up nothing detectable in
+quality against always-remote execution, cuts latency to roughly a third, and
+keeps most raw sequences on the device. It also gives an answer
 nobody in this project expected. A routed antigen is charged twice: once for
 the local pass that decides it is hard, once for the remote pass that then
 processes it. For the checkpoint pair measured here, routing is therefore the
 most carbon-intensive policy in the comparison. The green framing that usually
 accompanies edge inference does not survive contact with the accounting. The
-condition under which it would is a ratio rather than a verdict, and
+condition under which it would is a ratio rather than a verdict.
 Section~\ref{sec:routing-results} shows that a remote tier the size of the one
 a laboratory would really call sits on the other side of it.
 
-The paper also re-examines an earlier unpublished analysis of our own, which
-reported that blending the scores of our local predictor with those of
-BepiPred-3.0 \citep{clifford2022bepipred} improved on BepiPred-3.0 alone. The
-mixing weight
-and the decision threshold had both been chosen by scanning the evaluation
-split and keeping the configuration that scored best.
-\citet{kapoor2023leakage} identify that step as
-the most common form of leakage in applied machine learning. It is easy to
-commit, because a sensitivity analysis and a model-selection procedure look
-superficially alike. We reproduce the original numbers under the original
-protocol, to within \TunedBpThreeReplicationMaxDiff{}. We then re-estimate the
-same quantity with weight and
-threshold chosen inside the training folds of a leave-one-sequence-out loop.
-The advantage does not survive on either dataset. On BP3C50ID the difference
-against BepiPred-3.0 is no longer detectable and the MCC estimate changes
-sign; on a larger IEDB-derived subset, which fuses against our own local
-predictor rather than BepiPred-3.0, the difference is likewise indistinguishable
-from zero. On both, the selection procedure places almost all of the weight on
-the reference predictor rather than on ours. Neither dataset is large enough to
-show that fusion cannot help, and we do not claim that it does not.
-
-The literature this belongs to is accumulating fusion and ensemble results
-faster than it scrutinises how their combination parameters were chosen, and
-the corrective is cheap: the nested protocol here costs one extra loop over
-sequences and needs no new data.
-
-\paragraph{Contributions.} Concretely, this paper offers the following.
+\paragraph{Contributions.} This paper offers the following.
 \begin{enumerate}
   \item A reproducible measurement harness for conformational B-cell epitope
   screening. It records predictive quality, latency, data movement and modelled
   energy together, per antigen and per seed, and states the provenance of each
   cost quantity (Section~\ref{sec:methods}).
+  \item An instance, in conformational epitope prediction, of the model
+  selection bias documented in bioinformatics since
+  \citet{varma2006bias}. We reproduce a previously reported fusion advantage
+  under its original, test-derived protocol, then re-estimate it under nested
+  cross-validation on two datasets. The advantage is no longer detectable on
+  either, and on BP3C50ID the estimate changes sign
+  (Section~\ref{sec:fusion-results}).
+  \item The observation that, given a free choice on either dataset, the
+  inner loop assigns our predictor almost no weight. We report the
+  per-fold selections rather than summarising them away
+  (Section~\ref{sec:weight-transfer}).
+  \item A survey of \SurveyAssessed{} published B-cell epitope predictors that
+  combine two or more models, the consensus predictors and meta-predictors of
+  this field, asking of each whether the combination parameter was selected on
+  the data the headline result is reported on.
+  \SurveyLeakage{} state that it was, \SurveyClean{} state a separate basis,
+  and \SurveyUnreported{} do not say. Each judgement is recorded with the
+  verbatim sentence it rests on (Section~\ref{sec:survey}).
+  \item A resampling estimate of how large the model selection bias is, as a
+  function of how much freedom the parameter grid allows. The inflation runs from
+  \BiasAtSmallestN{} \BiasMetric{} at \BiasSmallestN{} antigens to
+  \BiasAtLargestN{} at \BiasLargestN{}, and rises across the densities of the
+  weight grid examined: at \BiasGridRefN{} antigens a \BiasCoarseGridPoints{}-point
+  grid yields \BiasCoarseGridBias{} and a \BiasFineGridPoints{}-point grid
+  \BiasFineGridBias{}. At the grid densities ordinarily used the test-derived
+  estimate was the more favourable one in
+  \BiasPositiveShareLargestN{}\% of draws (Section~\ref{sec:bias-curve}).
   \item A \NumSeeds{}-seed characterisation of five local--edge routing
   policies on BP3C50ID, with bootstrap intervals and paired sign tests. It
   includes a closed-form condition locating where the known offloading energy
   threshold \citep{kumar2010cloud} falls for this task, and how that location
-  moves with the size of the remote tier: routing increases modelled carbon
+  moves with the size of the remote tier. Routing increases modelled carbon
   once the routed fraction exceeds \CarbonBreakEvenRate{} for the checkpoint
-  pair measured here, but the ordering reverses above a remote cost of
+  pair measured here; the ordering reverses above a remote operational cost of
   \ScaleCrossoverFactor{}\(\times\) the one measured, which the reference
   predictor's own backbone exceeds (Section~\ref{sec:routing-results}).
-  \item An instance, in conformational epitope prediction, of the
-  selection-bias mechanism documented in bioinformatics since
-  \citet{varma2006bias}: we reproduce a previously reported fusion advantage
-  under its original, test-derived protocol, then re-estimate it leakage-free
-  on two datasets, where it is no longer detectable and the estimate changes
-  sign (Section~\ref{sec:fusion-results}).
-  \item A survey of \SurveyAssessed{} published B-cell epitope predictors that
-  combine two or more models, asking of each whether the combination parameter
-  was selected on the data the headline result is reported on.
-  \SurveyLeakage{} state that it was, \SurveyClean{} state a separate basis,
-  and \SurveyUnreported{} do not say. Each judgement is recorded with the
-  verbatim sentence it rests on (Section~\ref{sec:survey}).
-  \item The observation that, given a free choice on either dataset, the
-  selection procedure assigns our predictor almost no weight. We report the
-  per-fold selections rather than summarising them away
-  (Section~\ref{sec:weight-transfer}).
 \end{enumerate}
