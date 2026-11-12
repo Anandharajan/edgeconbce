@@ -271,6 +271,68 @@ predictors that agree less would leave more room for a scan to exploit, and
 two that agree more would leave less. What transfers is the construction and
 the direction, not the numbers.
 
+\paragraph{What the evaluation split was allowed to decide.}
+Limiting the weight grid is the remedy this literature usually proposes, so it
+is worth asking how much of the inflation the grid actually accounts for. We
+move one quantity at a time from the training folds onto the evaluation split
+and score the three estimators that result: the weight, the decision threshold
+and the ECDF all fitted on the training folds; the weight alone chosen on the
+evaluation split; and all three fitted on it. Of the \SourceTotal{}
+\BiasMetric{} between the first and the last, \SourceGrid{} is the weight scan
+and \SourceTransform{} is the threshold and the normalisation, so scanning the
+grid is \SourceGridShare{}\% of the problem and refitting the two transforms is
+\SourceTransformShare{}\%. Neither transform is a hyperparameter anyone counts,
+and none of the \SurveyAssessed{} surveyed predictors reports where its
+threshold was fitted.
+
+The grid contributes less than its size suggests because its points are not
+independent. Resampling antigens at fixed weights puts the mean correlation
+between neighbouring weights at \CorrGridCorrelation{}, which leaves an
+effective \CorrEffectiveGrid{} independent candidates in a
+\BiasFineGridPoints{}-point grid. Predicting the inflation as that effective
+count's expected maximum tracks the measured surface across
+\CorrValidationCells{} cells with a correlation of \CorrValidationR{}. A
+reader who knows only the grid size and the sample size can therefore estimate
+how flattered a published figure is without rerunning the selection, though
+the estimate covers the weight scan and not the transforms.
+
+\subsection{Routing regions rather than whole antigens}
+\label{sec:region-routing}
+Routing an antigen discloses it entirely. A laboratory that will not send an
+unpublished construct will not send it because the local predictor is unsure
+about one loop of it, so the unit of the decision and the unit of the
+objection do not match. We therefore cut each antigen into contiguous windows,
+rank the windows by how close the local predictor sits to its own decision
+threshold, and escalate only the least confident of them under a budget
+expressed as the share of residues disclosed. Remote scores are spliced into
+the routed windows after both predictors pass through an ECDF fitted on the
+other antigens, and the window length is chosen on the training folds, so
+neither the normalisation nor the window enters the antigen it is applied to.
+
+Disclosure then becomes a quantity with a budget rather than a property of an
+antigen, and the interior of that axis is reachable. At
+\RegionDisclosed{}\% of residues disclosed, region routing scores
+\RegionMcc{} \BiasMetric{} against \RegionLocalOnly{} for the local predictor
+alone and \RegionRemoteOnly{} for the remote one, recovering
+\RegionGapRecovered{}\% of the distance between them. Whole-antigen routing at
+the same budget recovers \RegionAntigenGapRecovered{}\%, because a budget that
+small cannot fit an antigen.
+
+The difference is \RegionDiff{} \BiasMetric{}
+[\RegionDiffLo{}, \RegionDiffHi{}] over \RegionBootstrapDraws{} antigen
+resamples, positive in \RegionDiffSharePositive{}\% of draws. It is positive at
+all \RegionInteriorPositive{} of the \RegionInteriorBudgets{} interior budgets
+we examined, and its interval contains zero at every one of them. The direction
+is consistent and the magnitude is not resolved at \AntigenCount{} antigens,
+which is the same bound that governs every quality comparison in this paper.
+
+One assumption sits under the result and is not tested here. A routed region is
+scored with remote scores computed on the whole sequence, whereas a deployment
+that transmits only a fragment would obtain scores from a model reading less
+context. Whether that changes the scores enough to matter is a question about
+the remote model's context sensitivity rather than about the routing rule, and
+we do not settle it.
+
 \subsection{What routing buys, and what it costs}
 \label{sec:routing-results}
 

@@ -386,6 +386,53 @@ def add_selection_practice_survey(m: MacroSet, path: Path) -> None:
         m.add("SurveyLeakageShare", fmt(share * 100, 0))
 
 
+def add_region_routing(m: "MacroSet", path: Path) -> None:
+    """Macros for routing regions against routing whole antigens."""
+    d = json.loads(Path(path).read_text(encoding="utf-8"))
+    reg = {r["budget"]: r for r in d["nested_region"]["rows"]}
+    ant = {r["budget"]: r for r in d["nested_antigen"]["rows"]}
+    boot = {r["budget"]: r for r in d["paired_bootstrap"]}
+
+    low, high = reg[0.0]["mcc"], reg[1.0]["mcc"]
+    span = high - low
+    b = 0.05
+    m.add("RegionLocalOnly", fmt(low, 4))
+    m.add("RegionRemoteOnly", fmt(high, 4))
+    m.add("RegionDisclosed", fmt(100.0 * reg[b]["disclosed_fraction"], 1))
+    m.add("RegionMcc", fmt(reg[b]["mcc"], 4))
+    m.add("RegionAntigenMcc", fmt(ant[b]["mcc"], 4))
+    m.add("RegionGapRecovered", fmt(100.0 * (reg[b]["mcc"] - low) / span, 0))
+    m.add("RegionAntigenGapRecovered", fmt(100.0 * (ant[b]["mcc"] - low) / span, 0))
+    m.add("RegionDiff", fmt(boot[b]["mean_difference"], 4))
+    m.add("RegionDiffLo", fmt(boot[b]["ci_low"], 4))
+    m.add("RegionDiffHi", fmt(boot[b]["ci_high"], 4))
+    m.add("RegionDiffSharePositive", fmt(100.0 * boot[b]["share_positive"], 0))
+    interior = [k for k in reg if 0.0 < k < 1.0]
+    m.add("RegionInteriorBudgets", str(len(interior)))
+    m.add(
+        "RegionInteriorPositive",
+        str(sum(1 for k in interior if boot[k]["mean_difference"] > 0.0)),
+    )
+    m.add("RegionBootstrapDraws", str(int(boot[b]["resamples"])))
+
+
+def add_selection_bias_correction(m: "MacroSet", path: Path) -> None:
+    """Macros for predicting a grid scan's inflation, and for its sources."""
+    d = json.loads(Path(path).read_text(encoding="utf-8"))
+    f, v = d["full_split_estimate"], d["validation"]
+    m.add("CorrEffectiveGrid", fmt(f["effective_grid_points"], 1))
+    m.add("CorrGridCorrelation", fmt(f["mean_grid_correlation"], 2))
+    m.add("CorrPredictedBias", fmt(f["predicted_bias"], 4))
+    m.add("CorrValidationR", fmt(v["correlation"], 3))
+    m.add("CorrValidationCells", str(int(v["n_cells"])))
+    src = d["bias_sources"]["21"]
+    m.add("SourceGridShare", fmt(100.0 * src["grid_share"], 0))
+    m.add("SourceTransformShare", fmt(100.0 * src["transform_share"], 0))
+    m.add("SourceTotal", fmt(src["total_inflation"], 4))
+    m.add("SourceGrid", fmt(src["grid_component"], 4))
+    m.add("SourceTransform", fmt(src["transform_component"], 4))
+
+
 def add_selection_bias_decomposition(m: "MacroSet", path: Path) -> None:
     """Macros for the split of the headline gap into selection and aggregation.
 
@@ -482,6 +529,8 @@ def main() -> int:
     p.add_argument("--selection-survey")
     p.add_argument("--selection-bias-curve")
     p.add_argument("--selection-bias-decomposition")
+    p.add_argument("--region-routing")
+    p.add_argument("--selection-bias-correction")
     p.add_argument("--transport")
     p.add_argument("--two-node-transport")
     p.add_argument("--iedb-real-results")
@@ -508,6 +557,10 @@ def main() -> int:
         add_selection_bias_curve(m, Path(a.selection_bias_curve))
     if a.selection_bias_decomposition:
         add_selection_bias_decomposition(m, Path(a.selection_bias_decomposition))
+    if a.region_routing:
+        add_region_routing(m, Path(a.region_routing))
+    if a.selection_bias_correction:
+        add_selection_bias_correction(m, Path(a.selection_bias_correction))
     if a.transport:
         add_transport(m, Path(a.transport), "Transport")
     if a.two_node_transport:

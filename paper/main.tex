@@ -60,32 +60,33 @@ Under leave-one-sequence-out nested cross-validation the advantage is no longer
 detectable (\(\Delta\)ROC-AUC \NestedBpThreeDeltaAuc{}
 [\NestedBpThreeDeltaAucLo{}, \NestedBpThreeDeltaAucHi{}]) and the MCC estimate
 changes sign, from \TunedBpThreeDeltaMcc{} to \NestedBpThreeDeltaMcc{}.
-Resampling turns that single instance into a quantity: we draw antigen subsets
-and estimate the fused-minus-reference difference twice on each, once by
-scanning the parameter grid on the subset and once by nested cross-validation
-within it. Model selection bias, the gap between the two, contributes
+Resampling turns that instance into a quantity: on each antigen subset we
+estimate the fused-minus-reference difference twice, once by scanning the
+parameter grid on the subset and once by nested cross-validation within it. Model selection bias, the gap between the two, contributes
 \BiasAtSmallestN{} MCC at \BiasSmallestN{} antigens and \BiasAtLargestN{} at
 \BiasLargestN{}; it rises across the grid densities examined and, at the
 densities ordinarily used, is positive in \BiasPositiveShareLargestN{}\% of
 draws.
-Because that inflation exceeds the \TunedBpThreeDeltaMcc{} the tuned protocol
-had reported, a gain of that size is uninformative here. Nor is the practice
+That inflation exceeds the \TunedBpThreeDeltaMcc{} the tuned protocol had
+reported, so a gain of that size is uninformative here. Nor is the practice
 ours alone: of \SurveyAssessed{} published combined epitope predictors,
 \SurveyLeakage{} state that the combination parameter was chosen on the
 evaluation data, \SurveyClean{} state a separate basis, and
-\SurveyUnreported{} do not say. The same harness measures deployment cost.
-Routing antigens to a remote model on the local model's uncertainty runs at
-\(\AAdaptiveSplitLatency{}\,\)ms against \(\AEdgeOnlyLatency{}\,\)ms for
-always-remote execution ([\ADAsVsEoLatencyLo{}, \ADAsVsEoLatencyHi{}]) and
-transmits \AAdaptiveSplitRawShare{} of raw sequences, while its quality effect
-is not resolved at \AntigenCount{} antigens. Modelled carbon favours routing
+\SurveyUnreported{} do not say. The same harness measures deployment cost. Routing on the local model's
+uncertainty runs at \(\AAdaptiveSplitLatency{}\,\)ms against
+\(\AEdgeOnlyLatency{}\,\)ms for always-remote execution
+([\ADAsVsEoLatencyLo{}, \ADAsVsEoLatencyHi{}]) and transmits
+\AAdaptiveSplitRawShare{} of raw sequences, with no quality effect resolved at
+\AntigenCount{} antigens. Making the routed unit a region rather than an
+antigen gives disclosure a budget: at \RegionDisclosed{}\% of residues it
+recovers \RegionGapRecovered{}\% of the local-to-remote gap against
+\RegionAntigenGapRecovered{}\% for whole antigens, also unresolved. Modelled carbon favours routing
 only above a ratio: routing is the most carbon-intensive policy for the pair
 measured here, but the break-even rises with remote model size, and the
 ordering reverses above \ScaleCrossoverFactor{}\(\times\) the measured remote
-operational cost, which BepiPred-3.0's own backbone exceeds. Throughout, intervals over
-antigens are an order of magnitude wider than over re-runs; on benchmarks of
-this size the conventional analyses report more confidence than the data
-supports.
+operational cost, which BepiPred-3.0's own backbone exceeds. Throughout, intervals over antigens are an order of magnitude wider than over
+re-runs: on benchmarks of this size the conventional analyses report more
+confidence than the data supports.
 \end{abstract}
 
 \noindent\textbf{Keywords:} conformational B-cell epitope prediction; edge

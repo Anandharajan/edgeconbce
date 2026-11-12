@@ -99,6 +99,8 @@ $PY tools/make_numbers.py --repeated-eval "$REPEATED" --bepipred-summary "$BEPIP
   --selection-survey "$BIAS/selection_practice_survey.json" \
   --selection-bias-curve "$BIAS/selection_bias_curve.json" \
   --selection-bias-decomposition "$BIAS/selection_bias_decomposition.json" \
+  --region-routing "$OUT/region_routing/region_routing_bp3_mcc.json" \
+  --selection-bias-correction "$BIAS/selection_bias_correction.json" \
   --iedb-real-results "$IEDB_REAL" --output paper/generated_numbers.tex
 $PY tools/make_tables.py --repeated-eval "$REPEATED" \
   --nested-bp3 "$NESTED/nested_fusion_bp3_mcc.json" --nested-iedb "$NESTED/nested_fusion_iedb_mcc.json" \
