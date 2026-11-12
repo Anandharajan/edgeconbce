@@ -1,0 +1,347 @@
+{
+  "project": "EdgeConBCE",
+  "analysis": "selection_bias_correction",
+  "question": "Can the inflation of a grid-scanned result be predicted from the sampling spread of the metric and the size of the grid, without rerunning nested cross-validation?",
+  "method": "bias ~= sigma * E[max of G_eff standard normals]",
+  "full_split_estimate": {
+    "grid_points": 21,
+    "antigens": 15,
+    "metric": "mcc",
+    "sigma": 0.018790409690393785,
+    "mean_grid_correlation": 0.575229947838755,
+    "effective_grid_points": 1.6793821275349272,
+    "expected_max_standard_normal": 0.38304256631453915,
+    "predicted_bias": 0.0071975267499100205,
+    "resamples": 300
+  },
+  "validation": {
+    "cells": [
+      {
+        "antigens": 4,
+        "grid_points": 3,
+        "measured_bias": 0.0477102940072963,
+        "predicted_bias": 0.007247249723340496,
+        "error": -0.04046304428395581,
+        "ratio": 0.15190117508460918,
+        "sigma": 0.014603363787336919,
+        "effective_grid_points": 1.8802122360539113
+      },
+      {
+        "antigens": 6,
+        "grid_points": 3,
+        "measured_bias": 0.0312713500555933,
+        "predicted_bias": 0.011631372729212547,
+        "error": -0.01963997732638075,
+        "ratio": 0.37194981056253185,
+        "sigma": 0.029918615730378708,
+        "effective_grid_points": 1.689535382851813
+      },
+      {
+        "antigens": 8,
+        "grid_points": 3,
+        "measured_bias": 0.023268797298037543,
+        "predicted_bias": 0.006379612227017431,
+        "error": -0.016889185071020114,
+        "ratio": 0.27417026094234265,
+        "sigma": 0.024586567515307207,
+        "effective_grid_points": 1.4602178498968748
+      },
+      {
+        "antigens": 10,
+        "grid_points": 3,
+        "measured_bias": 0.020732260669121847,
+        "predicted_bias": 0.006112716417905482,
+        "error": -0.014619544251216365,
+        "ratio": 0.29484080465038826,
+        "sigma": 0.02508952139974523,
+        "effective_grid_points": 1.4321245604314639
+      },
+      {
+        "antigens": 12,
+        "grid_points": 3,
+        "measured_bias": 0.018427875760501165,
+        "predicted_bias": 0.006286893457747341,
+        "error": -0.012140982302753824,
+        "ratio": 0.34116213607337464,
+        "sigma": 0.01839435434890556,
+        "effective_grid_points": 1.6062037678074073
+      },
+      {
+        "antigens": 4,
+        "grid_points": 5,
+        "measured_bias": 0.05373684543461561,
+        "predicted_bias": 0.02800245741204102,
+        "error": -0.025734388022574592,
+        "ratio": 0.5211034846865555,
+        "sigma": 0.030586978296125528,
+        "effective_grid_points": 3.3772959798721347
+      },
+      {
+        "antigens": 6,
+        "grid_points": 5,
+        "measured_bias": 0.03330340626352837,
+        "predicted_bias": 0.0045773604217550674,
+        "error": -0.028726045841773306,
+        "ratio": 0.13744421172821236,
+        "sigma": 0.0365188912839762,
+        "effective_grid_points": 1.2223128701365122
+      },
+      {
+        "antigens": 8,
+        "grid_points": 5,
+        "measured_bias": 0.028556793278243262,
+        "predicted_bias": 0.012170089152879208,
+        "error": -0.016386704125364054,
+        "ratio": 0.42617142037972827,
+        "sigma": 0.0242830122475325,
+        "effective_grid_points": 1.88891099918267
+      },
+      {
+        "antigens": 10,
+        "grid_points": 5,
+        "measured_bias": 0.027399459038482857,
+        "predicted_bias": 0.008900230217845098,
+        "error": -0.01849922882063776,
+        "ratio": 0.3248323335633971,
+        "sigma": 0.01672827469872709,
+        "effective_grid_points": 1.9436635238429787
+      },
+      {
+        "antigens": 12,
+        "grid_points": 5,
+        "measured_bias": 0.02468751326647332,
+        "predicted_bias": 0.007967784833579747,
+        "error": -0.01671972843289357,
+        "ratio": 0.3227455413421624,
+        "sigma": 0.02028225287846146,
+        "effective_grid_points": 1.696768460224676
+      },
+      {
+        "antigens": 4,
+        "grid_points": 11,
+        "measured_bias": 0.04717795140112965,
+        "predicted_bias": 0.02113319165208844,
+        "error": -0.02604475974904121,
+        "ratio": 0.4479463610533631,
+        "sigma": 0.032203721090726216,
+        "effective_grid_points": 2.327068625572541
+      },
+      {
+        "antigens": 6,
+        "grid_points": 11,
+        "measured_bias": 0.036779984594386535,
+        "predicted_bias": 0.007872260412789284,
+        "error": -0.02890772418159725,
+        "ratio": 0.21403653371814546,
+        "sigma": 0.03482528951034273,
+        "effective_grid_points": 1.4009329927944862
+      },
+      {
+        "antigens": 8,
+        "grid_points": 11,
+        "measured_bias": 0.031796117280849585,
+        "predicted_bias": 0.006017333672965366,
+        "error": -0.025778783607884218,
+        "ratio": 0.18924743608835326,
+        "sigma": 0.03108746102942281,
+        "effective_grid_points": 1.3433095780767135
+      },
+      {
+        "antigens": 10,
+        "grid_points": 11,
+        "measured_bias": 0.025828849524851035,
+        "predicted_bias": 0.007559976000913147,
+        "error": -0.018268873523937888,
+        "ratio": 0.29269503442804806,
+        "sigma": 0.02209531828784045,
+        "effective_grid_points": 1.6068582132578872
+      },
+      {
+        "antigens": 12,
+        "grid_points": 11,
+        "measured_bias": 0.02427563679356993,
+        "predicted_bias": 0.007228896487627493,
+        "error": -0.01704674030594244,
+        "ratio": 0.29778401073879407,
+        "sigma": 0.020016326589343283,
+        "effective_grid_points": 1.640552465142196
+      },
+      {
+        "antigens": 4,
+        "grid_points": 21,
+        "measured_bias": 0.05424119638186917,
+        "predicted_bias": 0.02004550707395029,
+        "error": -0.03419568930791887,
+        "ratio": 0.3695624066406243,
+        "sigma": 0.026106321485805044,
+        "effective_grid_points": 2.722019358619638
+      },
+      {
+        "antigens": 6,
+        "grid_points": 21,
+        "measured_bias": 0.04131492017567041,
+        "predicted_bias": 0.013669848337602273,
+        "error": -0.027645071838068136,
+        "ratio": 0.33086953283410175,
+        "sigma": 0.02877056998787906,
+        "effective_grid_points": 1.842718076117072
+      },
+      {
+        "antigens": 8,
+        "grid_points": 21,
+        "measured_bias": 0.03440240270847839,
+        "predicted_bias": 0.014420447636869501,
+        "error": -0.01998195507160889,
+        "ratio": 0.41916978180467657,
+        "sigma": 0.022791195065180632,
+        "effective_grid_points": 2.243856668107057
+      },
+      {
+        "antigens": 10,
+        "grid_points": 21,
+        "measured_bias": 0.03278501908138781,
+        "predicted_bias": 0.014399329770066494,
+        "error": -0.01838568931132132,
+        "ratio": 0.4392045566397444,
+        "sigma": 0.017934181442843547,
+        "effective_grid_points": 2.8460799852926564
+      },
+      {
+        "antigens": 12,
+        "grid_points": 21,
+        "measured_bias": 0.03152799666045191,
+        "predicted_bias": 0.009627004753114614,
+        "error": -0.021900991907337297,
+        "ratio": 0.3053478106076602,
+        "sigma": 0.016199901373435518,
+        "effective_grid_points": 2.107766218634785
+      },
+      {
+        "antigens": 4,
+        "grid_points": 41,
+        "measured_bias": 0.05407653590875765,
+        "predicted_bias": 0.02725561750114219,
+        "error": -0.026820918407615458,
+        "ratio": 0.5040192949328355,
+        "sigma": 0.03440449879264433,
+        "effective_grid_points": 2.808258362430568
+      },
+      {
+        "antigens": 6,
+        "grid_points": 41,
+        "measured_bias": 0.0425521766017571,
+        "predicted_bias": 0.010372903847234837,
+        "error": -0.03217927275452226,
+        "ratio": 0.24376905426752038,
+        "sigma": 0.030319488641542935,
+        "effective_grid_points": 1.606799981837455
+      },
+      {
+        "antigens": 8,
+        "grid_points": 41,
+        "measured_bias": 0.03798676821019048,
+        "predicted_bias": 0.008855374976688389,
+        "error": -0.02913139323350209,
+        "ratio": 0.23311735622491864,
+        "sigma": 0.02915949500422951,
+        "effective_grid_points": 1.5386343386213701
+      },
+      {
+        "antigens": 10,
+        "grid_points": 41,
+        "measured_bias": 0.03228168378961643,
+        "predicted_bias": 0.012616760955534798,
+        "error": -0.019664922834081635,
+        "ratio": 0.3908334223753546,
+        "sigma": 0.020596276473857478,
+        "effective_grid_points": 2.1725671123174086
+      },
+      {
+        "antigens": 12,
+        "grid_points": 41,
+        "measured_bias": 0.029027166777939258,
+        "predicted_bias": 0.009684925337321964,
+        "error": -0.019342241440617296,
+        "ratio": 0.3336503838425781,
+        "sigma": 0.019901618961544357,
+        "effective_grid_points": 1.863127491150686
+      }
+    ],
+    "n_cells": 25,
+    "mean_absolute_error": 0.02300455423814266,
+    "median_absolute_error": 0.01998195507160889,
+    "mean_signed_error": -0.02300455423814266,
+    "mean_measured_bias": 0.03460596003851196,
+    "mean_predicted_bias": 0.0116014058003693,
+    "correlation": 0.7681961991004083,
+    "share_within_50pc": 0.08
+  },
+  "bias_sources": {
+    "3": {
+      "grid_points": 3,
+      "metric": "mcc",
+      "nested": 0.0,
+      "weight_only": 0.0,
+      "full": 0.0,
+      "total_inflation": 0.0,
+      "grid_component": 0.0,
+      "transform_component": 0.0,
+      "grid_share": NaN,
+      "transform_share": NaN,
+      "note": "grid_component is what scanning the weight grid on the evaluation split costs. transform_component is what additionally fitting the decision threshold and the ECDF on it costs. Neither is a hyperparameter count, and only the first is what limiting a grid would address."
+    },
+    "5": {
+      "grid_points": 5,
+      "metric": "mcc",
+      "nested": -0.012388580624453908,
+      "weight_only": 0.0,
+      "full": 0.0,
+      "total_inflation": 0.012388580624453908,
+      "grid_component": 0.012388580624453908,
+      "transform_component": 0.0,
+      "grid_share": 1.0,
+      "transform_share": 0.0,
+      "note": "grid_component is what scanning the weight grid on the evaluation split costs. transform_component is what additionally fitting the decision threshold and the ECDF on it costs. Neither is a hyperparameter count, and only the first is what limiting a grid would address."
+    },
+    "11": {
+      "grid_points": 11,
+      "metric": "mcc",
+      "nested": -0.0008421130113658841,
+      "weight_only": 0.0038157266966498764,
+      "full": 0.00590897157034773,
+      "total_inflation": 0.006751084581713614,
+      "grid_component": 0.00465783970801576,
+      "transform_component": 0.0020932448736978534,
+      "grid_share": 0.689939468486628,
+      "transform_share": 0.31006053151337193,
+      "note": "grid_component is what scanning the weight grid on the evaluation split costs. transform_component is what additionally fitting the decision threshold and the ECDF on it costs. Neither is a hyperparameter count, and only the first is what limiting a grid would address."
+    },
+    "21": {
+      "grid_points": 21,
+      "metric": "mcc",
+      "nested": 0.0007357908564743433,
+      "weight_only": 0.0038157266966498764,
+      "full": 0.00590897157034773,
+      "total_inflation": 0.005173180713873387,
+      "grid_component": 0.003079935840175533,
+      "transform_component": 0.0020932448736978534,
+      "grid_share": 0.5953659867160237,
+      "transform_share": 0.4046340132839762,
+      "note": "grid_component is what scanning the weight grid on the evaluation split costs. transform_component is what additionally fitting the decision threshold and the ECDF on it costs. Neither is a hyperparameter count, and only the first is what limiting a grid would address."
+    },
+    "41": {
+      "grid_points": 41,
+      "metric": "mcc",
+      "nested": 0.0002714752368022146,
+      "weight_only": 0.0038157266966498764,
+      "full": 0.00590897157034773,
+      "total_inflation": 0.0056374963335455155,
+      "grid_component": 0.0035442514598476617,
+      "transform_component": 0.0020932448736978534,
+      "grid_share": 0.6286924638438962,
+      "transform_share": 0.3713075361561037,
+      "note": "grid_component is what scanning the weight grid on the evaluation split costs. transform_component is what additionally fitting the decision threshold and the ECDF on it costs. Neither is a hyperparameter count, and only the first is what limiting a grid would address."
+    }
+  },
+  "note": "Weights are never re-selected inside the resampling loop; the same grid is scored on each resampled set of antigens. The validation compares the prediction against the directly measured bias surface, excluding the full-split cell, which is a single deterministic run."
+}

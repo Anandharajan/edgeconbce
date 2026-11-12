@@ -59,6 +59,19 @@ $PY -m edgeconbce.pipeline.selection_bias_curve \
   --reference-threshold 0.1512 --replicates 100 \
   --output "$BIAS/selection_bias_curve.json"
 
+echo "== region-level routing against whole-antigen routing =="
+$PY -m edgeconbce.pipeline.region_routing \
+  --carbon-predictions "$CARBON_BP3" --bepipred-raw-scores "$BEPIPRED_RAW" \
+  --reference-threshold 0.1512 --bootstrap 2000 \
+  --output "$OUT/region_routing/region_routing_bp3_mcc.json"
+
+echo "== predicting the inflation of a grid scan without rerunning it =="
+$PY -m edgeconbce.pipeline.selection_bias_correction \
+  --carbon-predictions "$CARBON_BP3" --bepipred-raw-scores "$BEPIPRED_RAW" \
+  --selection-bias-curve "$BIAS/selection_bias_curve.json" \
+  --reference-threshold 0.1512 --resamples 300 \
+  --output "$BIAS/selection_bias_correction.json"
+
 echo "== how much of the headline gap is selection, how much is aggregation =="
 $PY -m edgeconbce.pipeline.selection_bias_decomposition \
   --carbon-predictions "$CARBON_BP3" --bepipred-raw-scores "$BEPIPRED_RAW" \
