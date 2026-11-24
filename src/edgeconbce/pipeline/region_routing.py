@@ -38,6 +38,7 @@ from typing import Any, Sequence
 
 import numpy as np
 
+from edgeconbce.pipeline.selection_bias_correction import _fast_metric
 from edgeconbce.pipeline.nested_fusion import (
     FusionInputs,
     apply_ecdf,
@@ -451,6 +452,110 @@ def disclosure_frontier(
     return rows
 
 
+def select_window_debiased(
+    inputs: FusionInputs,
+    oof: dict[str, Any],
+    train_groups: np.ndarray,
+    *,
+    budget: float,
+    windows: Sequence[int],
+    metric: str,
+    resamples: int = 40,
+    rng: np.random.Generator | None = None,
+) -> dict[str, Any]:
+    """Pick a window length after subtracting each candidate's own optimism.
+
+    Taking the best window on the training folds is a grid scan, which is the
+    procedure this project exists to criticise. It is also not a scan whose
+    candidates are interchangeable: the routing step ranks units and spends a
+    budget on the least confident ones, so a short window hands it more units
+    to choose among than a long one. More units means more freedom, and more
+    freedom means a training-fold score that flatters short windows
+    specifically. Subtracting a constant would leave the ranking untouched;
+    what is needed is an optimism estimate that differs per candidate.
+
+    The estimate is Efron's: resample the training antigens, apply the whole
+    routing rule to the resampled set, and score it both there and on the
+    antigens the resample left out. The gap between those two is what choosing
+    on in-bag data buys, measured separately for every window length.
+    """
+    rng = np.random.default_rng() if rng is None else rng
+    uniq = np.unique(train_groups)
+    groups = np.asarray(inputs.groups)
+    rows: list[dict[str, Any]] = []
+
+    for w in windows:
+        train_sel = np.isin(groups, uniq)
+        sub_oof = {k: (oof[k][train_sel] if k != "rate" else oof[k]) for k in oof}
+        raw = _score_subset(
+            inputs, sub_oof, groups[train_sel], policy="region",
+            window=w, budget=budget, metric=metric,
+        )
+
+        gaps: list[float] = []
+        for _ in range(resamples):
+            in_bag = rng.choice(uniq, size=len(uniq), replace=True)
+            out_bag = np.setdiff1d(uniq, np.unique(in_bag))
+            if len(out_bag) == 0:
+                continue
+            in_sel = np.isin(groups, np.unique(in_bag))
+            out_sel = np.isin(groups, out_bag)
+            a = _score_subset(
+                inputs, {k: (oof[k][in_sel] if k != "rate" else oof[k]) for k in oof},
+                groups[in_sel], policy="region", window=w, budget=budget,
+                metric=metric,
+            )
+            b = _score_subset(
+                inputs, {k: (oof[k][out_sel] if k != "rate" else oof[k]) for k in oof},
+                groups[out_sel], policy="region", window=w, budget=budget,
+                metric=metric,
+            )
+            if np.isfinite(a) and np.isfinite(b):
+                gaps.append(a - b)
+
+        optimism = float(np.mean(gaps)) if gaps else 0.0
+        rows.append(
+            {
+                "window": int(w),
+                "raw": float(raw),
+                "optimism": optimism,
+                "corrected": float(raw - optimism),
+                "draws_used": len(gaps),
+            }
+        )
+
+    best_raw = max(rows, key=lambda r: r["raw"])["window"]
+    best_corrected = max(rows, key=lambda r: r["corrected"])["window"]
+    return {
+        "candidates": rows,
+        "window_raw": int(best_raw),
+        "window_corrected": int(best_corrected),
+        "changed": bool(best_raw != best_corrected),
+    }
+
+
+def _score_subset(
+    inputs: FusionInputs,
+    sub_oof: dict[str, Any],
+    sub_groups: np.ndarray,
+    *,
+    policy: str,
+    window: int,
+    budget: float,
+    metric: str,
+) -> float:
+    """Route and score one set of antigens, returning a single metric value."""
+    mask = _route_pooled(
+        sub_oof, sub_groups, policy=policy, window=window, budget=budget
+    )
+    spliced = splice(sub_oof["local"], sub_oof["remote"], mask)
+    t = threshold_for_positive_rate(spliced, sub_oof["rate"])
+    labels = inputs.labels[np.isin(np.asarray(inputs.groups), np.unique(sub_groups))]
+    if len(np.unique(labels)) < 2:
+        return float("nan")
+    return _fast_metric(labels, spliced, t, metric)
+
+
 def nested_pooled_routing(
     inputs: FusionInputs,
     oof: dict[str, Any],
@@ -459,8 +564,15 @@ def nested_pooled_routing(
     budgets: Sequence[float] = DEFAULT_BUDGETS,
     metric: str = "mcc",
     policy: str = "region",
+    debias: bool = False,
+    optimism_resamples: int = 40,
+    seed: int = 20261124,
 ) -> dict[str, Any]:
     """Choose the window length leave-one-antigen-out, at each fixed budget.
+
+    With ``debias`` the window is chosen by ``select_window_debiased`` rather
+    than by the raw training-fold maximum, so each candidate pays for the
+    selection freedom its own granularity gives the router.
 
     For each held-out antigen the window is the one that scores best over the
     remaining antigens; the held-out antigen is then scored with it. The budget
@@ -474,6 +586,8 @@ def nested_pooled_routing(
     margins = np.abs(oof["local"] - oof["gate"])
     n = len(inputs.labels)
 
+    switches: list[bool] = []
+    selection_detail: list[dict[str, Any]] = []
     for b in budgets:
         # Per antigen, pick the window length on the OTHER antigens only.
         chosen: dict[Any, int] = {}
@@ -486,17 +600,32 @@ def nested_pooled_routing(
                 "gate": oof["gate"][train_sel],
                 "rate": oof["rate"],
             }
-            best_w, best_v = windows[0], -np.inf
-            for w in windows:
-                m = _route_pooled(
-                    sub_oof, sub_groups, policy=policy, window=w, budget=b
+            if debias and policy == "region":
+                pick = select_window_debiased(
+                    inputs,
+                    oof,
+                    np.unique(sub_groups),
+                    budget=b,
+                    windows=windows,
+                    metric=metric,
+                    resamples=optimism_resamples,
+                    rng=np.random.default_rng(seed + int(held) if str(held).isdigit() else seed),
                 )
-                s = splice(sub_oof["local"], sub_oof["remote"], m)
-                t = threshold_for_positive_rate(s, oof["rate"])
-                v = score_metrics(inputs.labels[train_sel], s, t)[metric]
-                if v > best_v:
-                    best_w, best_v = w, v
-            chosen[held] = best_w
+                chosen[held] = pick["window_corrected"]
+                switches.append(pick["changed"])
+                selection_detail.append({"held_out": str(held), "budget": float(b), **pick})
+            else:
+                best_w, best_v = windows[0], -np.inf
+                for w in windows:
+                    m = _route_pooled(
+                        sub_oof, sub_groups, policy=policy, window=w, budget=b
+                    )
+                    sc = splice(sub_oof["local"], sub_oof["remote"], m)
+                    t = threshold_for_positive_rate(sc, oof["rate"])
+                    v = score_metrics(inputs.labels[train_sel], sc, t)[metric]
+                    if v > best_v:
+                        best_w, best_v = w, v
+                chosen[held] = best_w
 
         # One split-wide budget. Each antigen contributes units cut at the
         # window length its own fold never saw, so the unit boundaries carry no
@@ -536,7 +665,13 @@ def nested_pooled_routing(
                 **{k: float(scores[k]) for k in METRICS},
             }
         )
-    return {"select_metric": metric, "rows": rows}
+    out = {"select_metric": metric, "rows": rows, "debiased": bool(debias)}
+    if debias:
+        out["selection_changed_share"] = (
+            float(np.mean(switches)) if switches else 0.0
+        )
+        out["selection_detail"] = selection_detail
+    return out
 
 
 def paired_bootstrap(
@@ -632,6 +767,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p.add_argument("--reference-threshold", type=float, default=None)
     p.add_argument("--select-metric", default="mcc", choices=METRICS)
     p.add_argument("--bootstrap", type=int, default=2000)
+    p.add_argument("--optimism-resamples", type=int, default=40)
     p.add_argument("--seed", type=int, default=20260112)
     p.add_argument("--output", required=True)
     a = p.parse_args(argv)
@@ -642,6 +778,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     frontier = disclosure_frontier(inputs, oof, metric=a.select_metric)
     region = nested_pooled_routing(
         inputs, oof, metric=a.select_metric, policy="region"
+    )
+    region_debiased = nested_pooled_routing(
+        inputs,
+        oof,
+        metric=a.select_metric,
+        policy="region",
+        debias=True,
+        optimism_resamples=a.optimism_resamples,
     )
     antigen = nested_pooled_routing(
         inputs, oof, metric=a.select_metric, policy="antigen"
@@ -668,6 +812,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "window_grid": list(DEFAULT_WINDOWS),
         "budget_grid": list(DEFAULT_BUDGETS),
         "nested_region": region,
+        "nested_region_debiased": region_debiased,
         "nested_antigen": antigen,
         "frontier": frontier,
         "paired_bootstrap": paired,

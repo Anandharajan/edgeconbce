@@ -142,3 +142,47 @@ def test_region_routing_can_reach_disclosure_levels_antigen_routing_cannot() -> 
     # With 6 equal antigens, a 10% residue budget cannot fit a whole antigen.
     assert antigen.sum() == 0
     assert region.sum() > 0
+
+
+def test_debiased_selection_subtracts_a_per_candidate_optimism() -> None:
+    """Corrected scores must be raw minus a candidate's own optimism."""
+    inputs = _toy(n_antigens=6, length=48, seed=11)
+    oof = rr.out_of_fold_scores(inputs, reference_threshold=None)
+    groups = np.unique(np.asarray(inputs.groups))
+    pick = rr.select_window_debiased(
+        inputs, oof, groups, budget=0.25, windows=(8, 16, 24),
+        metric="mcc", resamples=15, rng=np.random.default_rng(0),
+    )
+    assert {c["window"] for c in pick["candidates"]} == {8, 16, 24}
+    for c in pick["candidates"]:
+        assert c["corrected"] == pytest.approx(c["raw"] - c["optimism"], abs=1e-12)
+    assert pick["window_corrected"] in (8, 16, 24)
+    assert isinstance(pick["changed"], bool)
+
+
+def test_debiased_selection_picks_the_best_corrected_candidate() -> None:
+    inputs = _toy(n_antigens=6, length=48, seed=12)
+    oof = rr.out_of_fold_scores(inputs, reference_threshold=None)
+    groups = np.unique(np.asarray(inputs.groups))
+    pick = rr.select_window_debiased(
+        inputs, oof, groups, budget=0.25, windows=(8, 16, 24),
+        metric="mcc", resamples=15, rng=np.random.default_rng(1),
+    )
+    best = max(pick["candidates"], key=lambda c: c["corrected"])
+    assert pick["window_corrected"] == best["window"]
+    best_raw = max(pick["candidates"], key=lambda c: c["raw"])
+    assert pick["window_raw"] == best_raw["window"]
+
+
+def test_debias_flag_is_recorded_and_does_not_change_the_budget() -> None:
+    """Correcting the selection must not alter what the policy is allowed to spend."""
+    inputs = _toy(n_antigens=6, length=48, seed=13)
+    oof = rr.out_of_fold_scores(inputs, reference_threshold=None)
+    kw = dict(windows=(8, 16, 24), budgets=(0.25,), metric="mcc", policy="region")
+    raw = rr.nested_pooled_routing(inputs, oof, **kw)
+    deb = rr.nested_pooled_routing(inputs, oof, debias=True, optimism_resamples=10, **kw)
+    assert raw["debiased"] is False and deb["debiased"] is True
+    assert "selection_changed_share" in deb
+    assert deb["rows"][0]["disclosed_fraction"] == pytest.approx(
+        raw["rows"][0]["disclosed_fraction"], abs=0.02
+    )
